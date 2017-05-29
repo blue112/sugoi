@@ -20,10 +20,10 @@ class Input<T> extends FormElement<T>
 	public var disabled:Bool;
 	public var showLabelAsDefaultValue:Bool;
 	public var printRequired:Bool;
-	
+
 	public var formatter:Formatter;
 	public var inputType : InputType;
-	
+
 	public function new(name:String, label:String, ?value:T, ?required=false, ?validators:Array<Validator<T>>, ?attributes="")
 	{
 		super();
@@ -44,15 +44,15 @@ class Input<T> extends FormElement<T>
 		this.password = false;
 		this.disabled = false;
 		inputType = ITText;
-		
+
 		printRequired = false;
 		if(Form.USE_TWITTER_BOOTSTRAP) cssClass = "form-control";
 	}
-	
+
 	public function get_password(){
 		return inputType == ITPassword;
 	}
-	
+
 	public function set_password(v:Bool){
 		if (v){
 			inputType = ITPassword;
@@ -61,7 +61,7 @@ class Input<T> extends FormElement<T>
 		}
 		return v;
 	}
-	
+
 	override public function render():String
 	{
 		var n = parentForm.name + "_" +name;
@@ -71,19 +71,19 @@ class Input<T> extends FormElement<T>
 			case ITText : "text" ;
 			case ITColor : "color";
 		}
-		
+
 		return "<input class=\""+ getClasses() +"\" type=\""+tType+"\" name=\""+n+"\" id=\""+n+"\" value=\"" +safeString(value)+ "\"  "+attributes+" "+ (disabled?"disabled":"")+"/>" + ((required && parentForm.isSubmitted() && printRequired)?" required":"") ;
 	}
-	
+
 	override public function getTypedValue(str:String):T{
-		
+
 		if (str == "" || str==null) {
 			return null;
 		}
 		return cast StringTools.trim(str);
-		
+
 	}
-	
+
 	/**
 	 * render label + field
 	 */
@@ -93,7 +93,7 @@ class Input<T> extends FormElement<T>
 		}else{
 			return super.getFullRow();
 		}
-		
+
 	}
-	
+
 }

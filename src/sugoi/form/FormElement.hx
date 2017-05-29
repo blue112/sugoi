@@ -10,19 +10,19 @@ class FormElement<T>
 	public var name:String;
 	public var label:String;
 	public var description:String;
-	
-	//value can be any type : Int, Float, Enum... 
-	public var value:T;		
-	
+
+	//value can be any type : Int, Float, Enum...
+	public var value:T;
+
 	public var required:Bool;
 	public var errors:List<String>;
 	public var attributes:String;
 	public var active:Bool;
-	
+
 	public var cssClass:String;
 	public var inited:Bool;
 	public var internal:Bool;
-	
+
 	public var validators:List<Validator<T>>;
 	public var filters:List<IFilter<T>>;
 
@@ -31,11 +31,11 @@ class FormElement<T>
 		active = true;
 		errors = new List();
 		validators = new List();
-		filters = new List();		
+		filters = new List();
 		inited = false;
 		internal = false;
 	}
-	
+
 	/**
 	 * apply all linked filter to the data
 	 */
@@ -45,7 +45,7 @@ class FormElement<T>
 		}
 		return value;
 	}
-	
+
 	/**
 	 * Checks if the current value of the elements is valid
 	 */
@@ -61,11 +61,13 @@ class FormElement<T>
 			return false;
 		}
 
+
 		if (value!=null) {
 			//check validity
 			if (!validators.isEmpty()){
 				for (validator in validators)
 				{
+					trace("Check is "+value+" is valid for "+validator);
 					if (!validator.isValid(value)) 	return false;
 				}
 
@@ -83,7 +85,7 @@ class FormElement<T>
 	public function addValidator(validator:Validator<T>){
 		validators.add(validator);
 	}
-	
+
 	public function addFilter(filter:IFilter<T>) {
 		filters.add(filter);
 	}
@@ -98,10 +100,10 @@ class FormElement<T>
 		var n = parentForm.name + "_" + name;
 		var v = App.current.params.get(n);
 		value = getTypedValue(v);
-		
+
 		//trace("value of " + name +"("+n+")  is " + v + ", typed :"+ value+"<br/>");
 	}
-	
+
 	/**
 	 * from string (web param) to typed value
 	 */
@@ -161,7 +163,7 @@ class FormElement<T>
 	{
 		var css = "";
 		if (Form.USE_TWITTER_BOOTSTRAP) css = "col-sm-4 control-label";
-		
+
 		var requiredSet = false;
 		if (required) {
 			css += " "+parentForm.requiredClass;
@@ -185,7 +187,7 @@ class FormElement<T>
 		var n = parentForm.name + "_" + name;
 		return "<label for=\"" + n + "\" class=\""+getLabelClasses()+"\" id=\"" + n + "__Label\">" + label +(required?parentForm.labelRequiredIndicator:'') +"</label>";
 	}
-	
+
 	/**
 	 * Return CSS classes of the element
 	 */
@@ -222,7 +224,7 @@ class FormElement<T>
 	private inline function safeString(s:Dynamic) {
 		return s == null ? "" : Std.string(s).htmlEscape().split('"').join("&quot;");
 	}
-	
+
 	/**
 	 * Renders the element in HTML
 	 */
@@ -230,7 +232,7 @@ class FormElement<T>
 	{
 		return render();
 	}
-	
+
 	/**
 	 * get element value with the correct type
 	 */

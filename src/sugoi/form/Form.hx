@@ -35,12 +35,12 @@ class Form
 	public var multipart:Bool;
 
 	public static var translator : ITranslator;
-	
+
 	//submit button
 	public var submitButtonLabel:String;
 	public var autoGenSubmitButton:Bool;	//add a submit button automatically
-	
-	//conf	
+
+	//conf
 	public static var USE_TWITTER_BOOTSTRAP = true;
 	public static var USE_DATEPICKER = true; //http://eonasdan.github.io/bootstrap-datetimepicker/
 
@@ -57,7 +57,7 @@ class Form
 
 		this.id = name;
 		this.name = name;
-		
+
 		if (action == null) {
 			this.action = Web.getURI();
 		}else {
@@ -154,16 +154,16 @@ class Form
 		throw "Cannot access form element: '" + name + "'";
 		return null;
 	}
-	
+
 	public function removeElementByName(name:String) {
 		var e = getElement(name);
 		if (e != null) removeElement(e);
 	}
 
 	/**
-	 * Get the typed value of a form element. 
+	 * Get the typed value of a form element.
 	 * The value can be of any type !
-	 * 
+	 *
 	 * @param	elementName
 	 * @return
 	 */
@@ -186,23 +186,23 @@ class Form
 		for (element in getElements())
 		{
 			if (element.name == null) throw "Element has no name : "+element.toString();
-			data.set( element.name,element.getValue() );	
+			data.set( element.name,element.getValue() );
 		}
 		return data;
 	}
-	
+
 	/**
 	 * return datas in an anonymous object
 	 * @return
 	 */
 	public function getDatasAsObject():Dynamic {
-	
+
 		var data = { };
 		for ( el in elements) {
 			Reflect.setField(data, el.name, el.value);
 		}
 		return data;
-		
+
 	}
 
 	/**
@@ -247,7 +247,7 @@ class Form
 			if (this.getElement(f) == null) throw "field '"+f+"' was not in the original form";
 			var v = data.get(f);
 			if (f == "id") continue;
-			
+
 			if (Std.is(v, String)) {
 				v = StringTools.trim(v);
 				if (v == "") v = null;
@@ -258,7 +258,7 @@ class Form
 			}catch (e:Dynamic){
 				throw "Error '" + e+"' while setting value " + v + " to " + f;
 			}
-			
+
 
 		}
 	}
@@ -274,7 +274,7 @@ class Form
 			if (val == "") val = null;
 			form.addElement(new sugoi.form.elements.StringInput(f, f, val));
 		}
-		
+
 		return form;
 	}
 
@@ -295,48 +295,48 @@ class Form
 
 		//get metas of this object
 		var metas = haxe.rtti.Meta.getFields(Type.getClass(obj));
-		
+
 		//loop on db object fields to create form elements
 		for (f in ti.fields) {
-			
+
 			var e : FormElement<Dynamic>;
 			//field value
 			var v :Dynamic = Reflect.field(obj, f.name);
 			//trace( "field " + f.name+" of " + obj + " is " + v+"<br/>");
 
-			//meta of this field						
+			//meta of this field
 			var meta :Dynamic = Reflect.field(metas, f.name);
 			//trace(f.name+"=>" + meta + "<br/>");
-			
+
 			//hide this field in forms
 			if (meta!=null && Reflect.hasField(meta,'hideInForms')) {
 				continue;
 			}
-			
+
 			//check if its a foreign key
 			var rl = Lambda.filter(ti.relations, function(r) return r.key == f.name );
 			var isNull = ti.nulls.get(f.name);
-			
+
 			//foreign keys
 			if (rl.length > 0 ) {
-				
+
 				var r = rl.first();
 				//trace(f.name + ' is a key for ' + r.key + "/"+r.prop);
 				var objects = new List();
-				
+
 				meta = Reflect.field(metas, r.prop);
 				if (meta != null) {
 					//trace(r.prop+"=>" + meta + "<br/>");
 					if (meta.formPopulate != null) {
 						//If @formPopulate() meta is set, use this function to populate select box.
-						objects = Reflect.callMethod(obj, Reflect.field(obj,Std.string(meta.formPopulate[0])) , []);	
+						objects = Reflect.callMethod(obj, Reflect.field(obj,Std.string(meta.formPopulate[0])) , []);
 					}
-					
+
 					//if @hideInForms meta is set, hide the fields in the form
 					if (meta!=null && Reflect.hasField(meta,'hideInForms')) {
 						continue;
 					}
-					
+
 				}else {
 					//get all available values
 					objects = r.manager.all(false).map(function(d) {
@@ -359,62 +359,62 @@ class Form
 
 				case DEncoded:
 					e = new StringInput(f.name, t._(f.name), v);
-					
+
 				case DFlags(fl, auto):
 					e = new Flags(f.name,t._(f.name), Lambda.array(fl), Std.parseInt(v));
 
 				case DTinyInt, DUInt, DSingle, DInt:
 					e = new IntInput(f.name, t._(f.name) , v , !isNull);
-				
+
 				case DFloat:
 					e = new FloatInput(f.name, t._(f.name), v, !isNull );
-					
+
 				case DBool :
 					e = new Checkbox(f.name, t._(f.name), Std.string(v) == 'true');
-					
+
 				case DString(n):
 					e = new StringInput(f.name,t._(f.name), v, !isNull ,null,"lenght="+n);
-		
+
 				case DTinyText, DSmallText, DText, DSerialized:
 					e = new TextArea(f.name, t._(f.name), v,!isNull);
 
 				case DTimeStamp, DDateTime:
-					
+
 					if (USE_DATEPICKER) {
-						 
+
 						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
 						var d :Date = cast v;
-						e = new DatePicker(f.name, t._(f.name), d);	
+						e = new DatePicker(f.name, t._(f.name), d);
 						untyped e.format = "LLLL";
 					}else {
-						e = new DateInput(f.name, t._(f.name), v);	
+						e = new DateInput(f.name, t._(f.name), v);
 					}
-					
+
 				case DDate :
 
 					if (USE_DATEPICKER) {
 						//trace(f.name+" => " + v);
 						//trace(Type.getClassName(Type.getClass(v)));
-						
+
 						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
 						var d :Date = cast v;
-						e = new DatePicker(f.name, t._(f.name), d);	
+						e = new DatePicker(f.name, t._(f.name), d);
 						untyped e.format = "LL";
 					}else {
-						e = new DateDropdowns(f.name, t._(f.name), v);	
+						e = new DateDropdowns(f.name, t._(f.name), v);
 					}
-					
+
 
 				case DEnum(name):
 					//var t = Type.resolveEnum(enumName);
 					e = new sugoi.form.elements.Enum(f.name, t._(f.name), name, Std.parseInt(v), !isNull);
-					
+
 
 				default :
 					e = new StringInput(f.name, t._(f.name) , "unknown field type : "+f.type+", value : "+v);
 				}
 			}
-			
+
 			form.addElement(e);
 		}
 		return form;
@@ -459,6 +459,7 @@ class Form
 		for (element in getElements()){
 			//trace(element.name+" -> "+element.value+" : "+element.isValid()+"<br>");
 			element.filter();
+			trace("Element: "+element+" is valid: "+element.isValid());
 			if (!element.isValid()) valid = false;
 		}
 		if (extraErrors.length > 0) valid = false;
@@ -557,7 +558,7 @@ class Form
 			submitButton.parentForm = this;
 		}
 		if(submitButton!=null) s.add(submitButton.getFullRow());
-		
+
 		s.add(getCloseTag());
 
 		return s.toString();
