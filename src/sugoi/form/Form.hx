@@ -459,7 +459,6 @@ class Form
 		for (element in getElements()){
 			//trace(element.name+" -> "+element.value+" : "+element.isValid()+"<br>");
 			element.filter();
-			trace("Element: "+element+" is valid: "+element.isValid());
 			if (!element.isValid()) valid = false;
 		}
 		if (extraErrors.length > 0) valid = false;
