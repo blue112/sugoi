@@ -19,32 +19,32 @@ class BaseApp {
 	public var cookieName	: String;
 	public var cookieDomain	: String;
 	public var uri 			: String;
-	
+
 	public static var config: Config;
 
 	public function new() {
-		
+
 		if (config == null) {
 			loadConfig();
 		}
-		
+
 		cookieName = "sid";
 		cookieDomain = "." + App.config.HOST;
 	}
-	
+
 	public function loadConfig() {
-		App.config = BaseApp.config = new sugoi.Config();		
+		App.config = BaseApp.config = new sugoi.Config();
 	}
 
 	public function loadTemplate( t : String ) {
 		templo.Loader.OPTIMIZED = App.config.DEBUG == false;
 		templo.Loader.BASE_DIR = App.config.TPL;
 		templo.Loader.TMP_DIR = App.config.TPL_TMP;
-		if ( t == null ) return null;		
+		if ( t == null ) return null;
 		#if neko
-		return new templo.Loader(t, App.config.getBool("cachetpl"));		
+		return new templo.Loader(t, App.config.getBool("cachetpl"));
 		#else
-		return new templo.Loader(t);		
+		return new templo.Loader(t);
 		#end
 	}
 
@@ -62,24 +62,24 @@ class BaseApp {
 		var path = Web.getCwd() + "../lang/" + lang + "/";
 		App.config.TPL = path + "tpl/";
 		App.config.TPL_TMP = path + "tmp/";
-		
+
 		initLocale();
 		return true;
 	}
 
 	public function initLocale() {
-		
-		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {			
+
+		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {
 			Sys.setTimeLocale("en");
 		}
 	}
 
 	function saveAndClose() {
-		
+
 		if( cnx == null ) return;
 		if( session.sid != null )
 			session.update();
-		
+
 		cnx.commit();
 		cnx.close();
 		untyped cnx.close = function() {}
@@ -102,7 +102,7 @@ class BaseApp {
 		case "tpl":
 			setTemplate(args[0]);
 		case "logged":
-			if ( user == null )				
+			if ( user == null )
 				throw sugoi.BaseController.ControllerAction.RedirectAction("/?redirect="+Web.getURI());
 		case "admin":
 			if( user == null || !user.isAdmin() )
@@ -124,8 +124,8 @@ class BaseApp {
 			}
 		return App.config.LANGS[App.config.LANGS.length - 1];
 	}
-	
-	
+
+
 
 	function setupLang() {
 		if( session.lang == null )
@@ -135,7 +135,7 @@ class BaseApp {
 			session.lang = lang;
 		initLang(session.lang);
 	}
-	
+
 	/**
 	 * Get current application langage (2 letters lowercase)
 	 */
@@ -159,56 +159,56 @@ class BaseApp {
 
 	function mainLoop() {
 		params = Web.getParams();
-		
+
 		//Get session
 		var sids = [];
 		var cookieSid = Web.getCookies().get(cookieName);
 		if( params.exists("sid") ) sids.push(params.get("sid"));
 		if( cookieSid != null ) sids.push(cookieSid);
 		session = sugoi.db.Session.init(sids);
-		
+
 		//Check for maintenance
 		maintain = sugoi.db.Variable.getInt("maintain") != 0;
 		user = session.user;
-		
+
 		//setup langage
 		setupLang();
-		
-		
+
+
 		if( maintain && ((user != null && user.isAdmin()) ) )
 			maintain = false;
-		
+
 		setCookie(cookieSid);
-		
+
 		if( maintain ) {
 			setTemplate("maintain.mtt");
 			executeTemplate();
 			return;
 		}
-		
+
 		//dispatching
 		try {
-			
+
 			uri = Web.getURI();
 			if ( StringTools.endsWith(uri, "/index.n") ) uri = uri.substr(0, -8);
-			
+
 			//"before dispatch" callback
 			beforeDispatch();
-			
+
 			var d = new haxe.web.Dispatch(uri, params);
 			d.onMeta = onMeta;
 			d.dispatch(new controller.Main());
-			
+
 		} catch ( e : haxe.web.Dispatch.DispatchError ) {
-			
+
 			//dispatch / routing error
 			if( App.config.DEBUG )	Lib.rethrow(e);
 			cnx.rollback();
 			Web.redirect("/");
 			return;
-			
+
 		} catch ( e : sugoi.BaseController.ControllerAction) {
-			
+
 			switch( e ) {
 			case RedirectAction(url):
 				Web.redirect(url);
@@ -221,29 +221,29 @@ class BaseApp {
 				Web.redirect(url);
 				var error = switch(e) { case ErrorAction(_): true; default: false; };
 				if( error ) rollback();
-				if ( error ) {					
+				if ( error ) {
 					session.addMessage(text,true);
-				}else {					
+				}else {
 					session.addMessage(text);
 				}
 				template = null;
 			}
 		}
-		
+
 		//Render template
-		if ( template == null ) {			
+		if ( template == null ) {
 			saveAndClose();
-		} else {			
+		} else {
 			executeTemplate(true); // will saveAndClose
 		}
 	}
-	
+
 	/**
-	 * Override this function if you want 
-	 * to insert some actions 
+	 * Override this function if you want
+	 * to insert some actions
 	 */
 	public function beforeDispatch() {
-		
+
 	}
 
 	public function logError( e : Dynamic, ?stack ) {
@@ -274,13 +274,13 @@ class BaseApp {
 			maintain = true;
 			view = new View();
 			view.message = Std.string(e);
-			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {				
+			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {
 				view.stack = stack;
 			}
-				
+
 			setTemplate("error.mtt");
 			executeTemplate(false);
-			
+
 		} catch( e : Dynamic ) {
 			Sys.print("<pre>");
 			Sys.println("Error : "+try Std.string(e) catch( e : Dynamic ) "???");
@@ -346,7 +346,8 @@ class BaseApp {
 	function run() {
 
 		// Will close the connection
-		sys.db.Transaction.main(cnx, cloneApp, function(e) { var b : BaseApp = App.current; b.errorHandler(e); });
+		cloneApp();
+		//sys.db.Transaction.main(cnx, , function(e) { var b : BaseApp = App.current; b.errorHandler(e); });
 		App.current = null;
 	}
 
@@ -360,10 +361,10 @@ class BaseApp {
 	}
 
 	static function main() {
-		
+
 		App.current = new App();
 		var a : BaseApp = App.current;
-		
+
 		a.sendHeaders();
 
 		if( !a.init() ) {
@@ -373,7 +374,7 @@ class BaseApp {
 		a.run();
 		a = null;
 		#if neko
-		if ( App.config.getInt("cache", 0) == 1 ) {			
+		if ( App.config.getInt("cache", 0) == 1 ) {
 			neko.Web.cacheModule(App.main);
 		}
 		#end
