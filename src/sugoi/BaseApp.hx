@@ -80,7 +80,7 @@ class BaseApp {
 		if( session.sid != null )
 			session.update();
 
-		cnx.commit();
+		//cnx.commit();
 		cnx.close();
 		untyped cnx.close = function() {}
 		untyped cnx.request = function(s) return null;
@@ -346,6 +346,8 @@ class BaseApp {
 	function run() {
 
 		// Will close the connection
+		sys.db.Manager.initialize();
+		sys.db.Manager.cnx = cnx;
 		cloneApp();
 		//sys.db.Transaction.main(cnx, , function(e) { var b : BaseApp = App.current; b.errorHandler(e); });
 		App.current = null;
