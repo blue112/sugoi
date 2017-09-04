@@ -17,45 +17,46 @@ class Session extends sys.db.Object {
 	public var messages : SData<Array<{ error : Bool, text : String }>>;
 	public var lastTime : SDateTime;
 	public var createTime : SDateTime;
-	
+
 	#if neko
 	public var sdata : SNekoSerialized;
 	#else
 	public var sdata : SText;
 	#end
-	
+
 	@:skip public var data : Dynamic;
 
 	//public var uid : SNull<SInt>;
 	@:relation(uid) public var user : SNull<db.User>;
-	
-	
+
+
 
 	public function new() {
 		super();
 		messages = [];
 		data = {};
-		
+
 	}
-	
+
 	/**
 	 * Stores a message in session
 	 */
 	public function addMessage( text : String, ?error=false ) {
 		messages.push({ error : error, text : text });
+		update();
 	}
-	
-	
-	public function setUser( u : User ):Void {		
-		
+
+
+	public function setUser( u : User ):Void {
+
 		//remove any previous session for this user
 		manager.delete($uid==u.id);
-		
+
 		lang = u.lang;
 		user = u;
 		update();
-		
-		App.current.user = u; 
+
+		App.current.user = u;
 	}
 
 	public override function update() {
@@ -70,7 +71,7 @@ class Session extends sys.db.Object {
 
 	private static function get( sid:String ):Session {
 		if ( sid == null ) return null;
-				
+
 		var s = manager.get(sid,true);
 		if ( s == null ) return null;
 		try {
@@ -82,7 +83,7 @@ class Session extends sys.db.Object {
 		}catch (e:Dynamic) {
 			s.data = null;
 		}
-		
+
 		return s;
 	}
 
@@ -97,7 +98,7 @@ class Session extends sys.db.Object {
 		s.ip = ip;
 		s.createTime = Date.now();
 		s.lastTime = Date.now();
-		
+
 		s.sid = generateId();
 		var count = 20;
 		while( try { s.insert(); false; } catch( e : Dynamic ) true ) {
@@ -108,23 +109,23 @@ class Session extends sys.db.Object {
 				break;
 			}
 		}
-		
+
 		return s;
 	}
-	
+
 	/**
 	 * Generate a random 32 chars string
 	 */
 	public static var S = "abcdefjhijklmnopqrstuvwxyABCDEFJHIJKLMNOPQRSTUVWXYZ0123456789";
 	public static function generateId():String {
-		
+
 		var id = "";
-		for ( x in 0...32 ) {			
+		for ( x in 0...32 ) {
 			id += S.substr(Std.random(S.length),1);
 		}
 		return id;
 	}
-	
+
 	/**
 	 * Delete sessions older than 1 month
 	 */

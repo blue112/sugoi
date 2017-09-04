@@ -56,7 +56,8 @@ class BaseApp {
 	public function initLang( lang : String ) {
 		if( !Lambda.has(App.config.LANGS,lang) )
 			return false;
-		session.lang = lang;
+		if (session != null)
+			session.lang = lang;
 		if( lang == App.config.LANG )
 			return false;
 		App.config.LANG = lang;
@@ -78,7 +79,7 @@ class BaseApp {
 	function saveAndClose() {
 
 		if( cnx == null ) return;
-		if( session.sid != null )
+		if( session != null && session.sid != null )
 			session.update();
 
 		//cnx.commit();
@@ -129,6 +130,9 @@ class BaseApp {
 
 
 	function setupLang() {
+		if (session == null)
+			return;
+
 		if( session.lang == null )
 			session.lang = user == null ? detectLang() : user.lang;
 		var lang = params.get("lang");
@@ -170,7 +174,9 @@ class BaseApp {
 
 		//Check for maintenance
 		maintain = sugoi.db.Variable.getInt("maintain") != 0;
-		user = session.user;
+
+		if (session != null)
+			user = session.user;
 
 		//setup langage
 		setupLang();
@@ -221,11 +227,12 @@ class BaseApp {
 				}
 				Web.redirect(url);
 				var error = switch(e) { case ErrorAction(_): true; default: false; };
-				if( error ) rollback();
 				if ( error ) {
-					session.addMessage(text,true);
+					if (session != null)
+						session.addMessage(text,true);
 				}else {
-					session.addMessage(text);
+					if (session != null)
+						session.addMessage(text);
 				}
 				template = null;
 			}
