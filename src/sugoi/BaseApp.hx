@@ -5,6 +5,7 @@ import neko.Lib;
 #else
 import php.Web;
 import php.Lib;
+import sys.db.Manager;
 #end
 
 class BaseApp {
