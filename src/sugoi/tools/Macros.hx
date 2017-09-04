@@ -27,13 +27,13 @@ class Macros {
 								for ( path in cp) {
 									Context.warning(path + "lang/fr/tpl/" + s,m.pos);
 									if ( sys.FileSystem.exists(path + "lang/fr/tpl/" + s) ) {
-										found = true;	
+										found = true;
 										break;
 									}
-									
+
 								}
 								if( !found ) Context.error("File not found '"+s+"'", m.params[0].pos);*/
-								
+
 								if( !sys.FileSystem.exists("lang/fr/tpl/"+s) )
 									Context.error("File not found '"+s+"'", m.params[0].pos);
 							default:
@@ -45,23 +45,23 @@ class Macros {
 					}else{
 						Context.error("Invalid @tpl", m.pos);
 					}
-				case "admin", "logged":
-				
+				case "admin", "logged", "rt", "modo":
+
 				default:
 					if( m.name.charCodeAt(0) != "_".code )
 						Context.error("Unknown metadata", m.pos);
 				}
 		return changed ? fields : null;
 	}
-	
+
 	macro public static function getCompileDate() {
 		return haxe.macro.Context.makeExpr(Date.now().toString(), haxe.macro.Context.currentPos());
 	}
-	
+
 	macro public static function getFilePath(){
 		var p = Context.getPosInfos(Context.currentPos());
 		//voir Context.resolvePath()
 		return haxe.macro.Context.makeExpr(p.file, Context.currentPos());
 	}
-	
+
 }
