@@ -67,7 +67,6 @@ class FormElement<T>
 			if (!validators.isEmpty()){
 				for (validator in validators)
 				{
-					trace("Check is "+value+" is valid for "+validator);
 					if (!validator.isValid(value)) 	return false;
 				}
 

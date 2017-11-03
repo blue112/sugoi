@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2008, TouchMyPixel & contributors
- * Original author : Tony Polinelli <tonyp@touchmypixel.com> 
- * Contributers: Tarwin Stroh-Spijer 
+ * Original author : Tony Polinelli <tonyp@touchmypixel.com>
+ * Contributers: Tarwin Stroh-Spijer
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,34 +29,33 @@
 package sugoi.form.validators;
 import sugoi.form.Form;
 import sugoi.form.FormElement;
-import sugoi.form.Validator;
-import poko.utils.StringTools2;
+import sugoi.form.validators.Validator;
 
-class RegexValidator extends Validator
+class RegexValidator extends Validator<String>
 {
 	public var regex:EReg;
 	public var regexOptions:String;
 	public var errorRegex:String;
-	
-	public function new(regex:EReg, ?errorMessage:String=null ) 
+
+	public function new(regex:EReg, ?errorMessage:String=null )
 	{
 		super();
 		this.regex = regex;
 		errorRegex = (errorMessage != null) ? errorMessage : "Regex Failed";
 	}
-	
+
 	override public function isValid(value:Dynamic):Bool
 	{
 		super.isValid(value);
-		
+
 		var valid:Bool = true;
-		
+
 		if (!regex.match(Std.string(value)))
 		{
-			errors.add(StringTools2.printf(errorRegex, [regex]));
+			errors.add(errorRegex);
 			valid = false;
 		}
-		
+
 		return valid;
 	}
 }
