@@ -173,7 +173,8 @@ class BaseApp {
 		session = sugoi.db.Session.init(sids);
 
 		//Check for maintenance
-		maintain = sugoi.db.Variable.getInt("maintain") != 0;
+		//maintain = sugoi.db.Variable.getInt("maintain") != 0;
+		maintain = false;
 
 		if (session != null)
 			user = session.user;
