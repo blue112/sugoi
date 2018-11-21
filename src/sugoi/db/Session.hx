@@ -121,7 +121,7 @@ class Session extends sys.db.Object {
 
 		var id = "";
 		for ( x in 0...32 ) {
-			id += S.substr(Std.random(S.length),1);
+			id += S.charAt(Std.random(S.length));
 		}
 		return id;
 	}
