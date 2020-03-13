@@ -1,14 +1,10 @@
 package sugoi.db;
 import sys.db.Types;
 import db.User;
-#if neko
-import neko.Web;
-#else
-import php.Web;
-#end
+import sugoi.Web;
 
 @:id(sid)
-@:index(uid,unique)
+//@:index(uid,unique)
 class Session extends sys.db.Object {
 
 	public var sid : SString<32>;
@@ -25,17 +21,12 @@ class Session extends sys.db.Object {
 	#end
 
 	@:skip public var data : Dynamic;
-
-	//public var uid : SNull<SInt>;
 	@:relation(uid) public var user : SNull<db.User>;
-
-
-
+	
 	public function new() {
 		super();
 		messages = [];
 		data = {};
-
 	}
 
 	/**
@@ -50,8 +41,8 @@ class Session extends sys.db.Object {
 	public function setUser( u : User ):Void {
 
 		//remove any previous session for this user
-		manager.delete($uid==u.id);
-
+		//manager.delete($uid==u.id);		
+		
 		lang = u.lang;
 		user = u;
 		update();
@@ -127,10 +118,13 @@ class Session extends sys.db.Object {
 	}
 
 	/**
-	 * Delete sessions older than 1 month
+	 * Delete old sessions
 	 */
 	public static function clean() {
-		manager.delete($lastTime < DateTools.delta(Date.now(),-1000.0*60*60*24*30));
+		//older than 3 month
+		manager.delete($lastTime < DateTools.delta(Date.now(),-1000.0*60*60*24*30*3));
+		//unlogged user
+		manager.delete($lastTime < DateTools.delta(Date.now(),-1000.0*60*60*24*30) && $uid==null );
 	}
 
 }

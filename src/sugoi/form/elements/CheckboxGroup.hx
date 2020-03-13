@@ -13,8 +13,7 @@ class CheckboxGroup extends FormElement<Array<String>>
 	public var selectMessage:String;
 	public var labelLeft:Bool;
 	public var verticle:Bool;
-	public var labelRight:Bool;
-	
+	public var labelRight:Bool;	
 	public var formatter:Formatter;
 	public var columns:Int;
 	
@@ -38,10 +37,9 @@ class CheckboxGroup extends FormElement<Array<String>>
 		
 		if (parentForm.isSubmitted())
 		{
-			value = (v != null) ? v : new Array();
+			value = (v != null) ? v : [];
 		} else {
-			if (v != null)
-				value = v;
+			if (v != null) value = v;
 		}
 	}
 	
@@ -77,8 +75,8 @@ class CheckboxGroup extends FormElement<Array<String>>
 					
 					if (formatter != null){
 						label = "<label for=\"" + n + c + "\" class=\""+''/*labelCss*/+"\" >" + formatter.format(row.label)  +"</label>\n";
-					}else if(Form.translator!=null){
-						label = "<label for=\"" + n + c + "\" class=\"" + ''/*labelCss*/+"\" >" + Form.translator._(row.label)  +"</label>\n";
+					//}else if(Form.translator!=null){
+						//label = "<label for=\"" + n + c + "\" class=\"" + ''/*labelCss*/+"\" >" + Form.translator._(row.label)  +"</label>\n";
 					}else {
 						label = "<label for=\"" + n + c + "\" class=\"" + ''/*labelCss*/+"\" >" + row.label +"</label>\n";
 					}
@@ -92,14 +90,12 @@ class CheckboxGroup extends FormElement<Array<String>>
 						s += "<td>" + checkbox + "</td>\n";
 					}
 					s += "</tr>";
-					
 					c++;
 				}
 				s += "</table>";
 				s += "</td>";
 			}
 			s += "</tr></table>\n";
-			
 		}
 		
 		return s;

@@ -1,12 +1,7 @@
 package sugoi;
-#if neko
-import neko.Web;
-import neko.Lib;
-#else
-import php.Web;
-import php.Lib;
-import sys.db.Manager;
-#end
+
+import sugoi.i18n.TemplateTranslator;
+import sugoi.Web;
 
 class BaseApp {
 
@@ -14,7 +9,7 @@ class BaseApp {
 	public var template		: templo.Loader;
 	public var maintain		: Bool;
 	public var session		: sugoi.db.Session;
-	public var view 		: View;
+	public var view 		: Dynamic;
 	public var user    		: db.User;
 	public var params 		: Map<String,String>;
 	public var cookieName	: String;
@@ -22,6 +17,17 @@ class BaseApp {
 	public var uri 			: String;
 
 	public static var config: Config;
+	//public static var classPathes = sugoi.tools.Macros.getClassPathes();
+
+	public var headers : Map<String,String>;
+	public static var defaultHeaders = [
+		"Pragma"=>"no-cache",
+		"Cache-Control"=>"no-store, no-cache, must-revalidate",
+		"Expires"=>"-1",
+		"P3P"=>"CP=\"ALL DSP COR NID CURa OUR STP PUR\"",
+		"Content-Type"=>"text/html; Charset=UTF-8",
+		//"Expires"=>"Mon, 26 Jul 1997 05:00:00 GMT"
+	];
 
 	public function new() {
 
@@ -31,10 +37,25 @@ class BaseApp {
 
 		cookieName = "sid";
 		cookieDomain = "." + App.config.HOST;
+
+		//populate default headers
+		headers = new Map<String,String>();
+		for(k in BaseApp.defaultHeaders.keys() ) {
+			headers.set(k,BaseApp.defaultHeaders.get(k));
+		}
+		
+		#if plugins
+		if( false ) sugoi.plugin.PlugIn.copyTpl();
+		#end
+		
+		// This macro generates translated templates for each langage
+		#if i18n_generation
+		if( false ) TemplateTranslator.parse("../lang/master");
+		#end
 	}
 
 	public function loadConfig() {
-		App.config = BaseApp.config = new sugoi.Config();
+		App.config = BaseApp.config = new sugoi.Config();	
 	}
 
 	public function loadTemplate( t : String ) {
@@ -54,26 +75,28 @@ class BaseApp {
 	}
 
 	public function initLang( lang : String ) {
-		if( !Lambda.has(App.config.LANGS,lang) )
-			return false;
-		if (session != null)
-			session.lang = lang;
-		if( lang == App.config.LANG )
-			return false;
-		App.config.LANG = lang;
-		var path = Web.getCwd() + "../lang/" + lang + "/";
+		if (lang == null || lang == "") lang = config.LANG;
+		
+		//Define template path
+		var path;
+		if (!App.config.DEBUG){
+			path = Web.getCwd() + "../lang/" + lang + "/";
+		}else{
+			path = Web.getCwd() + "../lang/master/";
+		}
+
 		App.config.TPL = path + "tpl/";
 		App.config.TPL_TMP = path + "tmp/";
-
-		initLocale();
-		return true;
-	}
-
-	public function initLocale() {
-
-		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {
+		
+		//init system locale
+		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {			
 			Sys.setTimeLocale("en");
 		}
+		
+		//init gettext translator
+		sugoi.i18n.Locale.init(lang);
+		
+		return true;
 	}
 
 	function saveAndClose() {
@@ -104,15 +127,18 @@ class BaseApp {
 		case "tpl":
 			setTemplate(args[0]);
 		case "logged":
-			if ( user == null )
-				throw sugoi.BaseController.ControllerAction.RedirectAction("/?redirect="+Web.getURI());
+			if ( user == null )				
+				throw sugoi.ControllerAction.RedirectAction("/?__redirect="+Web.getURI());
 		case "admin":
 			if( user == null || !user.isAdmin() )
-				throw sugoi.BaseController.ControllerAction.RedirectAction("/");
+				throw sugoi.ControllerAction.RedirectAction("/");
 		default:
 		}
 	}
 
+	/**
+	 * Detect lang from HTTP headers
+	 */
 	function detectLang() {
 		var l = Web.getClientHeader("Accept-Language");
 		if( l != null )
@@ -124,20 +150,32 @@ class BaseApp {
 					if( a == l )
 						return a;
 			}
-		return App.config.LANGS[App.config.LANGS.length - 1];
+			
+		return App.config.LANG;
 	}
-
-
-
+	
+	
+	/**
+	 * Setup current app language
+	 */
 	function setupLang() {
-		if (session == null)
-			return;
-
-		if( session.lang == null )
-			session.lang = user == null ? detectLang() : user.lang;
+		
+		//this app is monolingual and doesn't manage i18n
+		if (App.config.LANG == "master") return;
+		
+		//lang is taken from user object or from HTTP headers
+		if ( session.lang == null || !Lambda.has(App.config.LANGS, session.lang) ){			
+			session.lang = (user == null) ? detectLang() : user.lang;
+		}
+		
+		//override if param is given
 		var lang = params.get("lang");
-		if( lang != null && Lambda.has(App.config.LANGS, lang) )
+		if ( lang != null && Lambda.has(App.config.LANGS, lang) ){
 			session.lang = lang;
+			
+		}
+			
+		//init lang			
 		initLang(session.lang);
 	}
 
@@ -145,7 +183,7 @@ class BaseApp {
 	 * Get current application langage (2 letters lowercase)
 	 */
 	public function getLang(){
-		return session != null && session.lang != null && session.lang != "" ? session.lang : App.config.LANG;
+		return (session != null && session.lang != null && session.lang != "") ? session.lang : App.config.LANG;
 	}
 
 	public function rollback() {
@@ -210,13 +248,19 @@ class BaseApp {
 		} catch ( e : haxe.web.Dispatch.DispatchError ) {
 
 			//dispatch / routing error
-			if( App.config.DEBUG )	Lib.rethrow(e);
+			if ( App.config.DEBUG )	{
+				#if neko
+				neko.Lib.rethrow(e);
+				#else
+				php.Lib.rethrow(e);
+				#end
+			}
 			cnx.rollback();
 			Web.redirect("/");
 			return;
-
-		} catch ( e : sugoi.BaseController.ControllerAction) {
-
+			
+		} catch ( e : sugoi.ControllerAction) {
+			
 			switch( e ) {
 			case RedirectAction(url):
 				Web.redirect(url);
@@ -255,7 +299,7 @@ class BaseApp {
 
 	}
 
-	public function logError( e : Dynamic, ?stack ) {
+	public function logError( e : Dynamic, ?stack : String ) {
 		var stack = if( stack != null ) stack else haxe.CallStack.toString(haxe.CallStack.exceptionStack());
 		var message = new StringBuf();
 		message.add(Std.string(e));
@@ -280,10 +324,21 @@ class BaseApp {
 				cnx.rollback();
 				logError(e,stack);
 			}
+			
+			//log also in a file, in case we don't have a valid connexion to DB
+			Web.logMessage(e+"\n" + stack);
+			
 			maintain = true;
 			view = new View();
-			view.message = Std.string(e);
-			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {
+
+			//Exception can be a string, Enum, Array or tink.core.Error
+			if(Std.is(e,tink.core.Error)){
+				view.exception = e; 
+			}else{
+				view.message = Std.string(e);
+			}
+			
+			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {				
 				view.stack = stack;
 			}
 
@@ -299,7 +354,7 @@ class BaseApp {
 					sugoi.db.Error.manager.get(0,false);
 			} catch( e : Dynamic ) {
 				Sys.println("Initializing Database...");
-				sys.db.Admin.initializeDatabase();
+				sys.db.admin.Admin.initializeDatabase();
 				Sys.println("Done");
 			}
 			Sys.print("</pre>");
@@ -362,17 +417,25 @@ class BaseApp {
 		App.current = null;
 	}
 
+	/**
+		Send HTTP headers defined in this.headers
+	**/
 	function sendHeaders(){
-		Web.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-		Web.setHeader("Pragma", "no-cache");
-		Web.setHeader("Expires", "-1");
-		Web.setHeader("P3P", "CP=\"ALL DSP COR NID CURa OUR STP PUR\"");
-		Web.setHeader("Content-Type", "text/html; Charset=UTF-8");
-		Web.setHeader("Expires", "Mon, 26 Jul 1997 05:00:00 GMT");
+		for(k in headers.keys() ) {
+			Web.setHeader(k,headers.get(k));
+		}
 	}
 
 	static function main() {
-
+		
+		/**
+		 * this macro will parse the code and generate the allTexts.pot file
+		 * which will be used as a template for translation files (*.po and *.mo)
+		 */
+		#if i18n_parsing
+		if( false ) sugoi.i18n.GetText.parse(["../src", "../lang/master","../js","../common"], "../www/lang/allTexts.pot");
+		#end
+		
 		App.current = new App();
 		var a : BaseApp = App.current;
 

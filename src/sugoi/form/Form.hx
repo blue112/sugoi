@@ -8,7 +8,7 @@ import sugoi.Web;
 import sys.db.Types;
 import sys.db.Object;
 import sys.db.Manager;
-import sys.db.TableInfos;
+import sys.db.admin.TableInfos;
 
 enum FormMethod
 {
@@ -44,12 +44,15 @@ class Form
 	public static var USE_TWITTER_BOOTSTRAP = true;
 	public static var USE_DATEPICKER = true; //http://eonasdan.github.io/bootstrap-datetimepicker/
 
+	public var toString : Void->String; //you can change the way the form is rendered
+
 	public function new(name:String, ?action:String, ?method:FormMethod)
 	{
 		requiredClass = "formRequired";
 		requiredErrorClass = "formRequiredError";
 		invalidErrorClass = "formInvalidError";
 		labelRequiredIndicator = " *";
+		defaultClass = Form.USE_TWITTER_BOOTSTRAP ? "form-horizontal":"";
 
 		forcePopulate = true;
 		multipart = false;
@@ -72,6 +75,8 @@ class Form
 		addFieldset("__default", new FieldSet("__default", "Default", false));
 
 		addElement(new CSRFProtection());
+
+		toString = render;
 	}
 
 	/**
@@ -150,8 +155,6 @@ class Form
 		for (element in elements){
 			if (element.name == name) return element;
 		}
-
-		throw "Cannot access form element: '" + name + "'";
 		return null;
 	}
 
@@ -183,8 +186,7 @@ class Form
 	public function getData():Map<String,Dynamic>
 	{
 		var data = new Map<String,Dynamic>();
-		for (element in getElements())
-		{
+		for (element in getElements()){
 			if (element.name == null) throw "Element has no name : "+element.toString();
 			data.set( element.name,element.getValue() );
 		}
@@ -243,23 +245,24 @@ class Form
 		}
 
 		for (f in data.keys()) {
+			
 			//check if field was in the original form
 			if (this.getElement(f) == null) throw "field '"+f+"' was not in the original form";
 			var v = data.get(f);
 			if (f == "id") continue;
-
-			if (Std.is(v, String)) {
+			
+			//Values are already cleaned by each form elements when populated
+			/*if (Std.is(v, String)) {
 				v = StringTools.trim(v);
 				if (v == "") v = null;
-			}
-			//trace(f + " -> " + v+"<br>");
+			}*/
+			
+			//Debug : trace(f + " -> " + v+"<br>");
 			try{
 				Reflect.setProperty(obj, f, v);
 			}catch (e:Dynamic){
 				throw "Error '" + e+"' while setting value " + v + " to " + f;
 			}
-
-
 		}
 	}
 
@@ -270,28 +273,32 @@ class Form
 	public static function fromObject(obj:Dynamic) {
 		var form = new Form('fromObj');
 		for (f in Reflect.fields(obj)) {
-			var val = StringTools.trim(Reflect.field(obj, f));
+			var val = Reflect.field(obj, f);
 			if (val == "") val = null;
 			form.addElement(new sugoi.form.elements.StringInput(f, f, val));
-		}
-
+		}		
 		return form;
 	}
-
+	
 	/*
 	 *  Generate a form from a spod object
 	 */
 	public static function fromSpod(obj:sys.db.Object) {
 
 		//generate a form name
-		var name = Type.getClassName(Type.getClass(obj));
+		var cl = Type.getClass(obj);
+		var name = Type.getClassName(cl);
 
 		var form = new Form("form"+Md5.encode(name));
 		var ti = new TableInfos(Type.getClassName(Type.getClass(obj)));
 
 		//translator
-		var t = Form.translator;
-		if(t == null) t = Form.translator = new sugoi.i18n.translator.TMap(new Map<String,String>(), App.current.session.lang);
+		//var t = Form.translator;
+		var t = new Map<String,String>();
+		if (Reflect.hasField(cl, "getLabels")){
+			t = Reflect.callMethod(cl, Reflect.getProperty(cl,"getLabels"),[]); 
+		}
+		var label = function(s) return if (t.get(s) == null)  s else t.get(s);
 
 		//get metas of this object
 		var metas = haxe.rtti.Meta.getFields(Type.getClass(obj));
@@ -347,7 +354,7 @@ class Form
 					});
 				}
 
-				e = new IntSelect(f.name, t._(r.prop), Lambda.array(objects),v, !isNull);
+				e = new IntSelect(f.name, label(r.prop), Lambda.array(objects),v, !isNull);
 
 			}else {
 				//not foreign key
@@ -358,25 +365,25 @@ class Form
 					untyped e.inputType = ITHidden;
 
 				case DEncoded:
-					e = new StringInput(f.name, t._(f.name), v);
-
+					e = new StringInput(f.name, label(f.name), v);
+					
 				case DFlags(fl, auto):
-					e = new Flags(f.name,t._(f.name), Lambda.array(fl), Std.parseInt(v));
+					e = new Flags(f.name,label(f.name), Lambda.array(fl), Std.parseInt(v));
 
 				case DTinyInt, DUInt, DSingle, DInt:
-					e = new IntInput(f.name, t._(f.name) , v , !isNull);
-
+					e = new IntInput(f.name, label(f.name) , v , !isNull);
+				
 				case DFloat:
-					e = new FloatInput(f.name, t._(f.name), v, !isNull );
-
+					e = new FloatInput(f.name, label(f.name), v, !isNull );
+					
 				case DBool :
-					e = new Checkbox(f.name, t._(f.name), Std.string(v) == 'true');
-
+					e = new Checkbox(f.name, label(f.name), Std.string(v) == 'true');
+					
 				case DString(n):
-					e = new StringInput(f.name,t._(f.name), v, !isNull ,null,"lenght="+n);
-
+					e = new StringInput(f.name,label(f.name), v, !isNull ,null,"maxlength="+n);
+		
 				case DTinyText, DSmallText, DText, DSerialized:
-					e = new TextArea(f.name, t._(f.name), v,!isNull);
+					e = new TextArea(f.name, label(f.name), v,!isNull);
 
 				case DTimeStamp, DDateTime:
 
@@ -384,10 +391,10 @@ class Form
 
 						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
 						var d :Date = cast v;
-						e = new DatePicker(f.name, t._(f.name), d);
+						e = new DatePicker(f.name, label(f.name), d);	
 						untyped e.format = "LLLL";
 					}else {
-						e = new DateInput(f.name, t._(f.name), v);
+						e = new DateInput(f.name, label(f.name), v);	
 					}
 
 				case DDate :
@@ -398,20 +405,18 @@ class Form
 
 						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
 						var d :Date = cast v;
-						e = new DatePicker(f.name, t._(f.name), d);
+						e = new DatePicker(f.name, label(f.name), d);	
 						untyped e.format = "LL";
 					}else {
-						e = new DateDropdowns(f.name, t._(f.name), v);
+						e = new DateDropdowns(f.name, label(f.name), v);	
 					}
 
 
 				case DEnum(name):
-					//var t = Type.resolveEnum(enumName);
-					e = new sugoi.form.elements.Enum(f.name, t._(f.name), name, Std.parseInt(v), !isNull);
-
+					e = new sugoi.form.elements.Enum(f.name, label(f.name), name, Std.parseInt(v), !isNull);
 
 				default :
-					e = new StringInput(f.name, t._(f.name) , "unknown field type : "+f.type+", value : "+v);
+					e = new StringInput(f.name, label(f.name) , "unknown field type : "+f.type+", value : "+v);
 				}
 			}
 
@@ -428,7 +433,10 @@ class Form
 		}
 	}
 
-	function getOpenTag():String
+	/**
+	 * Prints form open tag <form ...>
+	 */
+	public function getOpenTag():String
 	{
 		//if there is a file input in the form, make it multipart
 		for ( e in elements) {
@@ -437,10 +445,13 @@ class Form
 				break;
 			}
 		}
-		return '<form id="' + id + '" class="'+(Form.USE_TWITTER_BOOTSTRAP?"form-horizontal":"")+'" name="' + name + '" method="' + method +'" action="' + action +'" ' + (multipart?'enctype="multipart/form-data"':'') + ' >';
+		return '<form id="' + id + '" class="'+defaultClass+'" name="' + name + '" method="' + method +'" action="' + action +'" ' + (multipart?'enctype="multipart/form-data"':'') + ' >';
 	}
 
-	function getCloseTag():String
+	/**
+	 * Prints form close tag ...</form>
+	 */
+	public function getCloseTag():String
 	{
 		var s = new StringBuf();
 		s.add('<div style="clear:both; height:0px;">&nbsp;</div>');
@@ -535,7 +546,7 @@ class Form
 	/**
 	 * Render form's HTML
 	 */
-	public function toString()
+	public function render()
 	{
 
 		var s:StringBuf = new StringBuf();

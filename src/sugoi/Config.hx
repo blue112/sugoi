@@ -1,13 +1,10 @@
 package sugoi;
-#if neko
-import neko.Web;
-#else
-import php.Web;
-#end
+
+import sugoi.Web;
+
 class Config {
 
 	public var PATH :String;
-	//public var json : Dynamic;	
 	public var xml : Xml;
 	public var LANG 		:String;
 	public var LANGS 		:Array<String>;
@@ -20,9 +17,8 @@ class Config {
 	public var DATA_HOST 	:String;
 	public var SQL_LOG 		:Bool;
 
-	public function new() {
-		PATH = Web.getCwd() + "../";
-		//json = haxe.Json.parse(sys.io.File.getContent(PATH + "config.json"));	
+	public function new(?path:String) {
+		PATH = (path != null) ? path : sugoi.Web.getCwd() + "../";
 		xml = Xml.parse(sys.io.File.getContent(PATH + "config.xml")).firstElement();
 		
 		LANG = get("lang");

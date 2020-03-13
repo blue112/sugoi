@@ -1,23 +1,21 @@
 package sugoi.tools;
 
 /**
- * CSV Import / Export
+ * CSV Import-Export Tool
+ * Based on thx.csv
+ * 
  * @author fbarbut<francois.barbut@gmail.com>
  */
 class Csv
 {
-
 	public var separator :String;
-	public var step : Int;
-	
-	//datas accessible in both forms
-	var headers : Array<String>;
-	var datas : Array<Array<String>>;
-	var datasAsMap : Array<Map<String,String>>;
+	var headers : Array<String>;	//datas accessible in both forms
+	public var datas : Array<Array<String>>;
+	public var datasAsMap : Array<Map<String,String>>;
+	public var step:Int;//@deprecated
 	
 	public function new() 
 	{
-		step = 1;
 		separator = ",";
 		datas = [];
 		headers = [];
@@ -57,16 +55,64 @@ class Csv
 			if (x[0].split(";").length > x[0].split(",").length) separator = ";";
 			
 		}catch (e:Dynamic){}
+
+		//trace(separator);
 	
-		var _datas = [];
+		var _datas = new Array<Array<String>>();
 		if (separator == ","){
 			_datas = thx.csv.Csv.decode(d);
 		}else{
 			_datas = thx.csv.DCsv.decode(d);
 		}
-		
+		/*for(line in d.split("\n")){
+			_datas.push(line.split(separator));
+		}*/
+
+
 		//removes headers
 		_datas.shift(); 
+		
+		//cleaning
+		for ( o in _datas.copy() ) {
+
+			//remove empty lines
+			if (o == null || o.length <= 1) {
+				_datas.remove(o);
+				continue;
+			}
+
+			//remove remaining quotes 
+			for (i in 0...o.length) {
+				var s = o[i];
+				if(s.substr(0,1)=="\""){
+					s = s.substr(1);
+				}
+				if(s.substr(s.length-1,1)=="\""){
+					s = s.substr(0,s.length-1);
+				}
+				o[i] = s;
+
+			}
+			
+			//nullify empty fields
+			for (i in 0...o.length) {
+				
+				if (o[i] == "" || o[i] == "null" || o[i]=="NULL") {
+					o[i] = null;
+					continue;
+				}
+				
+				//clean spaces and useless chars
+				o[i] = StringTools.trim(o[i]);
+				o[i] = StringTools.replace(o[i], "\n", "");
+				o[i] = StringTools.replace(o[i], "\t", "");
+				o[i] = StringTools.replace(o[i], "\r", "");
+			}
+			
+			//remove empty lines
+			if (isNullRow(o)) _datas.remove(o);
+
+		}		
 		
 		//cut columns which are out of headers		
 		for ( d in _datas){
@@ -84,15 +130,12 @@ class Csv
 				
 				//nullify
 				var v = d[h];
-				if ( v == "" || v=="null" ) v = null;
-				
+				if ( v == "" || v == "null" || v=="NULL" ) v = null;				
 				m[headers[h]] = v;
 			}
 			
 			datasAsMap.push(m);
-			
 		}
-		
 		
 		return datasAsMap;
 		
@@ -147,7 +190,7 @@ class Csv
 			//nullify empty fields
 			for (i in 0...o.length) {
 				
-				if (o[i] == "") {
+				if (o[i] == "" || o[i] == "null" || o[i]=="NULL") {
 					o[i] = null;
 					continue;
 				}
@@ -172,11 +215,11 @@ class Csv
 			for ( i in 0...row.length) {
 				var t = row[i];
 				if (t != "" && t != null) {
-					try{
-						if (!haxe.Utf8.validate(t)) {
-							t = haxe.Utf8.encode(t);	
-						}
-					}catch (e:Dynamic) {}
+					// try{
+					// 	if (!haxe.Utf8.validate(t)) {
+					// 		t = haxe.Utf8.encode(t);	
+					// 	}
+					// }catch (e:Dynamic) {}
 					row[i] = t;
 				}
 			}
@@ -192,41 +235,72 @@ class Csv
 	}
 	
 	/**
-	 * 
 	 * Print datas as a CSV file
 	 * 
 	 * @param	data
 	 * @param	headers
 	 * @param	fileName
 	 */
-	public static function printCsvData(data:Array<Dynamic>,headers:Array<String>,fileName:String) {
+	public static function printCsvDataFromObjects(data:Iterable<Dynamic>,headers:Array<String>,fileName:String) {
 		
 		App.current.setTemplate('empty.mtt');
 		Web.setHeader("Content-type", "text/csv");
 		Web.setHeader('Content-disposition', 'attachment;filename="$fileName.csv"');
-		
-		Sys.println(Lambda.map(headers,function(t) return App.t._(t)).join(","));
+
+		if(App.t==null)	{
+			Sys.println(Lambda.map(headers,function(t) return t).join(";"));
+		}else{
+			Sys.println(Lambda.map(headers,function(t) return App.t._(t)).join(";"));
+		}
 		
 		for (d in data) {
 			var row = [];
-			for( f in headers){
-				row.push( "\""+Reflect.getProperty(d,f)+"\"");	
+			for ( f in headers){
+				var v = Reflect.getProperty(d, f);
+				row.push( "\""+(v==null?"":v)+"\"");	
 			}
-			Sys.println(row.join(","));
+			Sys.println(row.join(";"));
 		}
 		return true;		
 	}
 	
 	/**
+	 * Separator is ";" for better compat with french excel users
+	 */
+	public static function printCsvDataFromStringArray(data:Array<Array<String>>,headers:Array<String>,fileName:String) {
+		
+		Web.setHeader("Content-type", "text/csv");
+		Web.setHeader('Content-disposition', 'attachment;filename="$fileName.csv"');		
+		Sys.println(Lambda.map(headers,function(t) return App.t._(t)).join(";"));
+		
+		for (r in data) {
+			var row = [];
+			for ( v in r ){	
+				row.push( "\""+(v==null?"":v)+"\"");	
+			}
+			Sys.println(row.join(";"));
+		}
+		return true;		
+	}
+
+	public static function escape(str:String){
+		if(str==null) return "";
+		str = StringTools.replace(str,'"',"'");
+		str.split("\n").join(" ");
+		str.split("\r").join(" ");
+		str.split("\t").join("    ");
+		return str;
+
+
+	}
+	
+	
+	/**
 	 * do a "array.shift()" on datas
 	 */
 	public function shift(){
-		if (datas.length == 0){
-			datasAsMap.shift();
-		}else{
-			datas.shift();
-		}
-		
+		if (datasAsMap != null)	datasAsMap.shift();
+		datas.shift();		
 	}
 	
 	

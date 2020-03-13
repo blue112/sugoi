@@ -90,7 +90,7 @@ class FormElement<T>
 	}
 
 	/**
-	 * fill the element with a value taken from the web params
+	 * Fill the element with a value taken from the web params
 	 */
 	public function populate():Void
 	{
@@ -99,12 +99,18 @@ class FormElement<T>
 		var n = parentForm.name + "_" + name;
 		var v = App.current.params.get(n);
 		value = getTypedValue(v);
+<<<<<<< HEAD
 
+=======
+		
+		//Debug
+>>>>>>> e33aa31db09eb2b0efc83faa8931d0e609e7fd4e
 		//trace("value of " + name +"("+n+")  is " + v + ", typed :"+ value+"<br/>");
 	}
 
 	/**
-	 * from string (web param) to typed value
+	 * From string (web param) to typed value.
+	 * This method is in charge of cleaning the input which may be unsafe ( triming, escaping ...)
 	 */
 	public function getTypedValue(str:String):T{
 		throw "getTypedValue() function not implemented in \""+name+"\"";

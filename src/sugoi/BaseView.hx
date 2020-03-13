@@ -3,15 +3,31 @@ package sugoi;
 import sugoi.db.Variable;
 import sugoi.db.File;
 
-class BaseView implements Dynamic {
+class BaseView{
 
 	var _vcache : Map<String,String>;
+	var user : db.User;
+	var session : sugoi.db.Session;
+	var LANG : String;
+	var HOST : String;
+	var DATA_HOST : String;
+	var DEBUG : Bool;
+	var NAME : String;
+	var isAdmin : Bool;
+	var sqlLog : Array<Dynamic>;
 
 	public function new() {
 		_vcache = new Map();
 	}
 
 	public function init() {
+		//copy fields of view into a dynamic 
+		var view:Dynamic = {};
+		var baseView = new View();
+		for(field in Type.getInstanceFields(View)){
+			Reflect.setField(view,field,Reflect.field(baseView,field));
+		}
+
 		var app = App.current;
 		
 		this.user = app.user;
@@ -24,8 +40,8 @@ class BaseView implements Dynamic {
 		this.isAdmin = app.user != null && app.user.isAdmin();
 		
 		//Access basic functions in views
-		this.Std = Std;
-		this.Math = Math;
+		//this.Std = Std;
+		//this.Math = Math;
 		
 		
 		if ( App.config.SQL_LOG  ) {			
@@ -89,14 +105,15 @@ class BaseView implements Dynamic {
 	}
 
 	function getParam( p : String ) {
+		if(App.current==null || App.current.params==null) return null;
 		return App.current.params.get(p);
 	}
 	
 	/**
 	 * Return the url of a db.File record
 	 */
-	public function file( file : sugoi.db.File) {
-		if (file == null) throw "file is null";
+	public function file( file : sugoi.db.File):String {
+		if (file == null) return "";
 		return "/file/"+sugoi.db.File.makeSign(file.id)+"."+file.getExtension();
 	}
 	
@@ -116,6 +133,48 @@ class BaseView implements Dynamic {
 		if (txt == null) return "";
 		return txt.split("\n").join("<br/>");		
 	}
+
+
+	public function _(str:String):String {
+		if (sugoi.i18n.Locale.texts != null) {
+			return sugoi.i18n.Locale.texts.get(str);
+		} else {
+			return str;
+		}
+	}
 	
+	//same function with params ( templo doesnt manage optionnal params in functions )
+	public function __(str:String, params:Dynamic){
+		return sugoi.i18n.Locale.texts.get(str, params);
+	}
+/*
+#else
+	public function _(str:String):String {
+		neko.Web.logMessage("_call "+str);
+		return StringTools.rtrim( str.split("||")[0] );
+	}
+	
+	//same function with params ( templo doesnt manage optionnal params in functions )
+	public function __(str:String, params:Dynamic):String {
+		neko.Web.logMessage("_call "+str);
+		str = StringTools.rtrim( str.split("||")[0] );
+		var list = str.split("::");
+		if(params != null) {
+			for (k in Reflect.fields(params)) {
+				str = StringTools.replace(str, "::" + k + "::", Reflect.field(params, k));
+			}
+		}
+		return str;
+	}
+#end
+*/
+
+	public function loopList(start:Int,end:Int):List<Int> {
+		var list = new List<Int>();
+		for (i in start...end) {
+			list.add(i);
+		}
+		return list;
+	}
 	
 }
