@@ -99,12 +99,8 @@ class FormElement<T>
 		var n = parentForm.name + "_" + name;
 		var v = App.current.params.get(n);
 		value = getTypedValue(v);
-<<<<<<< HEAD
-
-=======
 		
 		//Debug
->>>>>>> e33aa31db09eb2b0efc83faa8931d0e609e7fd4e
 		//trace("value of " + name +"("+n+")  is " + v + ", typed :"+ value+"<br/>");
 	}
 
