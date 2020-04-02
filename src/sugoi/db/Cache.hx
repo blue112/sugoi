@@ -10,19 +10,19 @@ class Cache extends sys.db.Object
 	public var name : SString<128>;
 	public var value : SText;
 	public var expire : SDateTime;
-	public var cdate : SNull<SDateTime>;
-	
+	//public var cdate : SNull<SDateTime>;
+
 	public function new(){
 		super();
-		cdate = Date.now();
+		//cdate = Date.now();
 	}
-	
+
 	/**
 	 * Read the value for key $id
 	 */
 	public static function get(id:String):Dynamic {
 		if (Std.random(1000) == 0) Cache.manager.delete($expire < Date.now());
-		
+
 		var c = manager.get(id, true);
 		if (c == null) return null;
 		if (c.expire.getTime() < Date.now().getTime()) {
@@ -31,9 +31,9 @@ class Cache extends sys.db.Object
 		}
 		return haxe.Unserializer.run(c.value);
 	}
-	
+
 	/**
-	 * Set a value for key $id 
+	 * Set a value for key $id
 	 * and optionnaly a lifetime in seconds
 	 */
 	public static function set(id:String, value:Dynamic,expireInSeconds:Float) {
@@ -41,7 +41,7 @@ class Cache extends sys.db.Object
 		var niou = false;
 		if (c == null) {
 			niou = true;
-			c = new Cache();			
+			c = new Cache();
 			c.name = id;
 		}
 		c.value = haxe.Serializer.run(value);
@@ -52,7 +52,7 @@ class Cache extends sys.db.Object
 			c.update();
 		}
 	}
-	
+
 	/**
 	 * Delete a value for key $id
 	 */
@@ -60,6 +60,6 @@ class Cache extends sys.db.Object
 		var c = manager.get(id, true);
 		if (c != null) c.delete();
 	}
-	
-	
+
+
 }

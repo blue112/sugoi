@@ -23,8 +23,8 @@ class Config {
 		
 		LANG = get("lang");
 		LANGS = get("langs").split(";");
-		TPL = PATH + "lang/" + LANG + "/tpl/";
-		TPL_TMP = PATH + "lang/" + LANG + "/tmp/";
+		TPL = PATH + "lang/master/tpl/";
+		TPL_TMP = PATH + "lang/master/tmp/";
 		DEBUG = get("debug","0") == "1";
 		HOST = get("host");
 		NAME = get("name");

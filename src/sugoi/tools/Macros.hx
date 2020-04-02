@@ -34,7 +34,7 @@ class Macros {
 
 								if( !found ) Context.error("File not found '"+s+"'", m.params[0].pos);*/
 								//Context.error("cwd "+, m.pos);
-								var path = Sys.getCwd()+'../lang/master/tpl/';
+								var path = Sys.getCwd()+'lang/master/tpl/';
 								if( !sys.FileSystem.exists('$path$s') )
 									Context.error('File not found "$path$s"', m.params[0].pos);
 							default:
@@ -46,7 +46,7 @@ class Macros {
 					}else{
 						Context.error("Invalid @tpl", m.pos);
 					}
-				case "admin", "logged", "rt", "modo", "animation":
+				case "admin", "logged", "rt", "modo", "animation", "cfc":
 
 				default:
 					if( m.name.charCodeAt(0) != "_".code )

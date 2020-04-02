@@ -1,6 +1,5 @@
 package sugoi;
 
-import sugoi.i18n.TemplateTranslator;
 import sugoi.Web;
 
 class BaseApp {
@@ -43,15 +42,6 @@ class BaseApp {
 		for(k in BaseApp.defaultHeaders.keys() ) {
 			headers.set(k,BaseApp.defaultHeaders.get(k));
 		}
-		
-		#if plugins
-		if( false ) sugoi.plugin.PlugIn.copyTpl();
-		#end
-		
-		// This macro generates translated templates for each langage
-		#if i18n_generation
-		if( false ) TemplateTranslator.parse("../lang/master");
-		#end
 	}
 
 	public function loadConfig() {
@@ -78,12 +68,7 @@ class BaseApp {
 		if (lang == null || lang == "") lang = config.LANG;
 		
 		//Define template path
-		var path;
-		if (!App.config.DEBUG){
-			path = Web.getCwd() + "../lang/" + lang + "/";
-		}else{
-			path = Web.getCwd() + "../lang/master/";
-		}
+		var path = Web.getCwd() + "../lang/master/";
 
 		App.config.TPL = path + "tpl/";
 		App.config.TPL_TMP = path + "tmp/";
@@ -92,9 +77,6 @@ class BaseApp {
 		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {			
 			Sys.setTimeLocale("en");
 		}
-		
-		//init gettext translator
-		sugoi.i18n.Locale.init(lang);
 		
 		return true;
 	}
@@ -247,6 +229,7 @@ class BaseApp {
 
 		} catch ( e : haxe.web.Dispatch.DispatchError ) {
 
+			App.log(e);
 			//dispatch / routing error
 			if ( App.config.DEBUG )	{
 				#if neko
@@ -326,7 +309,7 @@ class BaseApp {
 			}
 			
 			//log also in a file, in case we don't have a valid connexion to DB
-			Web.logMessage(e+"\n" + stack);
+			php.Syntax.code("error_log({0})", e+"\n" + stack);
 			
 			maintain = true;
 			view = new View();
@@ -353,9 +336,6 @@ class BaseApp {
 				if( cnx != null )
 					sugoi.db.Error.manager.get(0,false);
 			} catch( e : Dynamic ) {
-				Sys.println("Initializing Database...");
-				sys.db.admin.Admin.initializeDatabase();
-				Sys.println("Done");
 			}
 			Sys.print("</pre>");
 		}
@@ -433,7 +413,7 @@ class BaseApp {
 		 * which will be used as a template for translation files (*.po and *.mo)
 		 */
 		#if i18n_parsing
-		if( false ) sugoi.i18n.GetText.parse(["../src", "../lang/master","../js","../common"], "../www/lang/allTexts.pot");
+		if( false ) sugoi.i18n.GetText.parse(["../src", "lang/master","../js","../common"], "../www/lang/allTexts.pot");
 		#end
 		
 		App.current = new App();

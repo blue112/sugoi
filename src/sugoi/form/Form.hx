@@ -8,7 +8,6 @@ import sugoi.Web;
 import sys.db.Types;
 import sys.db.Object;
 import sys.db.Manager;
-import sys.db.admin.TableInfos;
 
 enum FormMethod
 {
@@ -43,8 +42,6 @@ class Form
 	//conf
 	public static var USE_TWITTER_BOOTSTRAP = true;
 	public static var USE_DATEPICKER = true; //http://eonasdan.github.io/bootstrap-datetimepicker/
-
-	public var toString : Void->String; //you can change the way the form is rendered
 
 	public function new(name:String, ?action:String, ?method:FormMethod)
 	{
@@ -229,44 +226,6 @@ class Form
 	}
 
 	/**
-	 * update a spod object from the content of the form
-	 * @param	data
-	 * @param	obj
-	 */
-	public function toSpod(obj:sys.db.Object) {
-		if (!isValid()) throw "submitted form should be valid";
-		var data = getData();
-
-		//if not new object, lock it
-		var id = Std.parseInt(data.get("id"));
-		if (id == 0) id = null;
-		if (id != null) {
-			obj.lock();
-		}
-
-		for (f in data.keys()) {
-			
-			//check if field was in the original form
-			if (this.getElement(f) == null) throw "field '"+f+"' was not in the original form";
-			var v = data.get(f);
-			if (f == "id") continue;
-			
-			//Values are already cleaned by each form elements when populated
-			/*if (Std.is(v, String)) {
-				v = StringTools.trim(v);
-				if (v == "") v = null;
-			}*/
-			
-			//Debug : trace(f + " -> " + v+"<br>");
-			try{
-				Reflect.setProperty(obj, f, v);
-			}catch (e:Dynamic){
-				throw "Error '" + e+"' while setting value " + v + " to " + f;
-			}
-		}
-	}
-
-	/**
 	 * Generate a form from any object
 	 * @param	obj
 	 */
@@ -279,152 +238,6 @@ class Form
 		}		
 		return form;
 	}
-	
-	/*
-	 *  Generate a form from a spod object
-	 */
-	public static function fromSpod(obj:sys.db.Object) {
-
-		//generate a form name
-		var cl = Type.getClass(obj);
-		var name = Type.getClassName(cl);
-
-		var form = new Form("form"+Md5.encode(name));
-		var ti = new TableInfos(Type.getClassName(Type.getClass(obj)));
-
-		//translator
-		//var t = Form.translator;
-		var t = new Map<String,String>();
-		if (Reflect.hasField(cl, "getLabels")){
-			t = Reflect.callMethod(cl, Reflect.getProperty(cl,"getLabels"),[]); 
-		}
-		var label = function(s) return if (t.get(s) == null)  s else t.get(s);
-
-		//get metas of this object
-		var metas = haxe.rtti.Meta.getFields(Type.getClass(obj));
-
-		//loop on db object fields to create form elements
-		for (f in ti.fields) {
-
-			var e : FormElement<Dynamic>;
-			//field value
-			var v :Dynamic = Reflect.field(obj, f.name);
-			//trace( "field " + f.name+" of " + obj + " is " + v+"<br/>");
-
-			//meta of this field
-			var meta :Dynamic = Reflect.field(metas, f.name);
-			//trace(f.name+"=>" + meta + "<br/>");
-
-			//hide this field in forms
-			if (meta!=null && Reflect.hasField(meta,'hideInForms')) {
-				continue;
-			}
-
-			//check if its a foreign key
-			var rl = Lambda.filter(ti.relations, function(r) return r.key == f.name );
-			var isNull = ti.nulls.get(f.name);
-
-			//foreign keys
-			if (rl.length > 0 ) {
-
-				var r = rl.first();
-				//trace(f.name + ' is a key for ' + r.key + "/"+r.prop);
-				var objects = new List();
-
-				meta = Reflect.field(metas, r.prop);
-				if (meta != null) {
-					//trace(r.prop+"=>" + meta + "<br/>");
-					if (meta.formPopulate != null) {
-						//If @formPopulate() meta is set, use this function to populate select box.
-						objects = Reflect.callMethod(obj, Reflect.field(obj,Std.string(meta.formPopulate[0])) , []);
-					}
-
-					//if @hideInForms meta is set, hide the fields in the form
-					if (meta!=null && Reflect.hasField(meta,'hideInForms')) {
-						continue;
-					}
-
-				}else {
-					//get all available values
-					objects = r.manager.all(false).map(function(d) {
-						return {
-							label : d.toString(),
-							value : Reflect.field(d,r.manager.table_keys[0])
-						};
-					});
-				}
-
-				e = new IntSelect(f.name, label(r.prop), Lambda.array(objects),v, !isNull);
-
-			}else {
-				//not foreign key
-
-				switch (f.type) {
-				case DId, DUId:
-					e = new IntInput(f.name, "id", v, false);
-					untyped e.inputType = ITHidden;
-
-				case DEncoded:
-					e = new StringInput(f.name, label(f.name), v);
-					
-				case DFlags(fl, auto):
-					e = new Flags(f.name,label(f.name), Lambda.array(fl), Std.parseInt(v));
-
-				case DTinyInt, DUInt, DSingle, DInt:
-					e = new IntInput(f.name, label(f.name) , v , !isNull);
-				
-				case DFloat:
-					e = new FloatInput(f.name, label(f.name), v, !isNull );
-					
-				case DBool :
-					e = new Checkbox(f.name, label(f.name), Std.string(v) == 'true');
-					
-				case DString(n):
-					e = new StringInput(f.name,label(f.name), v, !isNull ,null,"maxlength="+n);
-		
-				case DTinyText, DSmallText, DText, DSerialized:
-					e = new TextArea(f.name, label(f.name), v,!isNull);
-
-				case DTimeStamp, DDateTime:
-
-					if (USE_DATEPICKER) {
-
-						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
-						var d :Date = cast v;
-						e = new DatePicker(f.name, label(f.name), d);	
-						untyped e.format = "LLLL";
-					}else {
-						e = new DateInput(f.name, label(f.name), v);	
-					}
-
-				case DDate :
-
-					if (USE_DATEPICKER) {
-						//trace(f.name+" => " + v);
-						//trace(Type.getClassName(Type.getClass(v)));
-
-						//WTF bugfix : the type is correct (Date) but is null when traced in DatePicker
-						var d :Date = cast v;
-						e = new DatePicker(f.name, label(f.name), d);	
-						untyped e.format = "LL";
-					}else {
-						e = new DateDropdowns(f.name, label(f.name), v);	
-					}
-
-
-				case DEnum(name):
-					e = new sugoi.form.elements.Enum(f.name, label(f.name), name, Std.parseInt(v), !isNull);
-
-				default :
-					e = new StringInput(f.name, label(f.name) , "unknown field type : "+f.type+", value : "+v);
-				}
-			}
-
-			form.addElement(e);
-		}
-		return form;
-	}
-
 
 	public function clearData()
 	{
@@ -574,4 +387,7 @@ class Form
 		return s.toString();
 	}
 
+	public dynamic function toString():String {
+		return this.render();
+	}
 }
