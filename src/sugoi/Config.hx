@@ -18,9 +18,9 @@ class Config {
 	public var SQL_LOG 		:Bool;
 
 	public function new(?path:String) {
-		PATH = (path != null) ? path : sugoi.Web.getCwd() + "../";
+		PATH = (path != null) ? path : sugoi.Web.getCwd() + "/../";
 		xml = Xml.parse(sys.io.File.getContent(PATH + "config.xml")).firstElement();
-		
+
 		LANG = get("lang");
 		LANGS = get("langs").split(";");
 		TPL = PATH + "lang/master/tpl/";
@@ -32,7 +32,7 @@ class Config {
 		DATA_HOST = get("dataHost","data."+HOST);
 		SQL_LOG = getBool("sqllog", false);
 	}
-	
+
 	public function defined( val : String ) {
 		//return Reflect.field(xml,val) != null;
 		return xml.get(val) != null;

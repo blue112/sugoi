@@ -235,7 +235,7 @@ class Form
 			var val = Reflect.field(obj, f);
 			if (val == "") val = null;
 			form.addElement(new sugoi.form.elements.StringInput(f, f, val));
-		}		
+		}
 		return form;
 	}
 
@@ -252,12 +252,6 @@ class Form
 	public function getOpenTag():String
 	{
 		//if there is a file input in the form, make it multipart
-		for ( e in elements) {
-			if (Type.getClass(e) == sugoi.form.elements.FileUpload || Type.getClass(e) == sugoi.form.elements.ImageUpload){
-				multipart = true;
-				break;
-			}
-		}
 		return '<form id="' + id + '" class="'+defaultClass+'" name="' + name + '" method="' + method +'" action="' + action +'" ' + (multipart?'enctype="multipart/form-data"':'') + ' >';
 	}
 

@@ -2,12 +2,6 @@ package sugoi.form.elements;
 import sugoi.form.Form;
 import sugoi.form.FormElement;
 import sugoi.form.Formatter;
-#if php
-import php.Web;
-#else
-import neko.Web;
-#end
-
 
 enum FakeFlag {
 	Flag1;
@@ -58,7 +52,7 @@ class Flags<T> extends FormElement<Int>
 	public var excluded : Array<Int>; //indexes of flags you want to exclude
 
 	public var columns:Int;
-	
+
 	/**
 	 *
 	 * @param	name
@@ -79,41 +73,41 @@ class Flags<T> extends FormElement<Int>
 		this.labelRight = labelRight;
 		this.excluded = [];
 		if (value == null) value = 0;
-		
+
 		checked = [];
 		var i = 0;
 		for( f in data) {
 			checked.push( value & (1 << i) != 0 );
 			i++;
 		}
-		
+
 		columns = 1;
 	}
-	
+
 	override public function populate()
 	{
-		
+
 		var v  = Web.getParamValues(parentForm.name + "_" + name);
 		value = 0;
-		
+
 		if (v != null) {
 			var val = new haxe.EnumFlags<FakeFlag>();
 			for (vv in v) {
 				val.set( FakeFlag.createByIndex(Std.parseInt(vv)) );
 			}
-			
+
 			value = val.toInt();
 		}
 	}
-	
+
 	override public function render():String
 	{
 		var s = "";
 		var n = parentForm.name + "_" +name;
-		
+
 		var tagCss = getClasses();
 		var labelCss = getLabelClasses();
-			
+
 		var c = 0;
 		var array = Lambda.array(data);
 		if (array != null)
@@ -125,7 +119,7 @@ class Flags<T> extends FormElement<Int>
 			{
 				s += "<td valign=\"top\">\n";
 				s += "<table>\n";
-				
+
 				for (j in 0...rowsPerColumn)
 				{
 					if (c >= array.length) break;
@@ -133,19 +127,19 @@ class Flags<T> extends FormElement<Int>
 						c++;
 						continue;
 					}
-					
+
 					s += "<tr>";
-					
+
 					var row:Dynamic = array[c];
-					
+
 					var checkbox = "<input type=\"checkbox\" class=\"" + tagCss + "\" name=\""+n+"[]\" id=\""+n+c+"\" value=\""+c+"\" " + (checked[c]? "checked":"") +" ></input>\n";
 					var label;
-					
+
 					var t = Form.translator;
-					
+
 					label = "<label for=\"" + n + c + "\" class=\""+''/*labelCss*/+"\" > " + t._(row)  +"</label>\n";
-					
-					
+
+
 					if (labelRight)
 					{
 						s += "<td style='vertical-align:middle;'>" + checkbox + "</td>\n";
@@ -155,17 +149,17 @@ class Flags<T> extends FormElement<Int>
 						s += "<td style='vertical-align:middle;'>" + checkbox + "</td>\n";
 					}
 					s += "</tr>";
-					
+
 					c++;
 				}
 				s += "</table>";
 				s += "</td>";
 			}
 			s += "</tr></table>\n";
-			
+
 		}
-		
+
 		return s;
 	}
-	
+
 }

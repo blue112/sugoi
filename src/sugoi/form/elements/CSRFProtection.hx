@@ -1,21 +1,15 @@
 package sugoi.form.elements;
 import sugoi.form.FormElement;
 import sugoi.form.elements.Input;
-#if neko
-import neko.Web;
-#else
-import php.Web;
-#end
 
 /**
  * creates a hidden token in forms to avoid CSRF
  */
 class CSRFProtection extends StringInput
 {
-
 	public function new()
 	{
-		
+
 		value = haxe.crypto.Md5.encode(App.current.session.sid + App.config.KEY.substr(0, 5));
 		super("token","", value, true);
 		inputType = ITHidden;

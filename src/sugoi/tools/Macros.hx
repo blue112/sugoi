@@ -27,7 +27,7 @@ class Macros {
 								for ( path in cp) {
 									//Context.warning(path + s+" "+sys.FileSystem.exists(path + s),m.pos);
 									if ( sys.FileSystem.exists(path + s) ) {
-										found = true;	
+										found = true;
 										break;
 									}
 								}
@@ -46,7 +46,7 @@ class Macros {
 					}else{
 						Context.error("Invalid @tpl", m.pos);
 					}
-				case "admin", "logged", "rt", "modo", "animation", "cfc":
+				case "admin", "logged", "rt", "modo", "animation", "cfc", "supermodo":
 
 				default:
 					if( m.name.charCodeAt(0) != "_".code )
@@ -54,7 +54,7 @@ class Macros {
 				}
 		return changed ? fields : null;
 	}
-	
+
 	/**
 	 * get compile date
 	 */
@@ -67,12 +67,12 @@ class Macros {
 		//voir Context.resolvePath()
 		return haxe.macro.Context.makeExpr(p.file, Context.currentPos());
 	}
-	
+
 	/**
 	 * store classpathes at compilation time
 	 */
 	/*macro public static function getClassPathes() {
 		return haxe.macro.Context.makeExpr(Context.getClassPath(), haxe.macro.Context.currentPos());
 	}*/
-	
+
 }

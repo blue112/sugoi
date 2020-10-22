@@ -22,7 +22,7 @@ class Session extends sys.db.Object {
 
 	@:skip public var data : Dynamic;
 	@:relation(uid) public var user : SNull<db.User>;
-	
+
 	public function new() {
 		super();
 		messages = [];
@@ -41,8 +41,8 @@ class Session extends sys.db.Object {
 	public function setUser( u : User ):Void {
 
 		//remove any previous session for this user
-		//manager.delete($uid==u.id);		
-		
+		//manager.delete($uid==u.id);
+
 		lang = u.lang;
 		user = u;
 		update();
@@ -51,11 +51,7 @@ class Session extends sys.db.Object {
 	}
 
 	public override function update() {
-		#if neko
-		sdata = neko.Lib.serialize(data);
-		#else
 		sdata = haxe.Serializer.run(data);
-		#end
 		lastTime = Date.now();
 		super.update();
 	}
@@ -66,11 +62,7 @@ class Session extends sys.db.Object {
 		var s = manager.get(sid,true);
 		if ( s == null ) return null;
 		try {
-			#if neko
-			s.data = neko.Lib.localUnserialize(s.sdata);
-			#else
 			s.data = haxe.Unserializer.run(s.sdata);
-			#end
 		}catch (e:Dynamic) {
 			s.data = null;
 		}
