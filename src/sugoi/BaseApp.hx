@@ -45,7 +45,7 @@ class BaseApp {
 	}
 
 	public function loadConfig() {
-		App.config = BaseApp.config = new sugoi.Config();	
+		App.config = BaseApp.config = new sugoi.Config();
 	}
 
 	public function loadTemplate( t : String ) {
@@ -66,18 +66,18 @@ class BaseApp {
 
 	public function initLang( lang : String ) {
 		if (lang == null || lang == "") lang = config.LANG;
-		
+
 		//Define template path
 		var path = Web.getCwd() + "../lang/master/";
 
 		App.config.TPL = path + "tpl/";
 		App.config.TPL_TMP = path + "tmp/";
-		
+
 		//init system locale
-		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {			
+		if ( !Sys.setTimeLocale("en_US.UTF-8") ) {
 			Sys.setTimeLocale("en");
 		}
-		
+
 		return true;
 	}
 
@@ -109,7 +109,7 @@ class BaseApp {
 		case "tpl":
 			setTemplate(args[0]);
 		case "logged":
-			if ( user == null )				
+			if ( user == null )
 				throw sugoi.ControllerAction.RedirectAction("/?__redirect="+Web.getURI());
 		case "admin":
 			if( user == null || !user.isAdmin() )
@@ -132,32 +132,32 @@ class BaseApp {
 					if( a == l )
 						return a;
 			}
-			
+
 		return App.config.LANG;
 	}
-	
-	
+
+
 	/**
 	 * Setup current app language
 	 */
 	function setupLang() {
-		
+
 		//this app is monolingual and doesn't manage i18n
 		if (App.config.LANG == "master") return;
-		
+
 		//lang is taken from user object or from HTTP headers
-		if ( session.lang == null || !Lambda.has(App.config.LANGS, session.lang) ){			
+		if ( session.lang == null || !Lambda.has(App.config.LANGS, session.lang) ){
 			session.lang = (user == null) ? detectLang() : user.lang;
 		}
-		
+
 		//override if param is given
 		var lang = params.get("lang");
 		if ( lang != null && Lambda.has(App.config.LANGS, lang) ){
 			session.lang = lang;
-			
+
 		}
-			
-		//init lang			
+
+		//init lang
 		initLang(session.lang);
 	}
 
@@ -241,9 +241,9 @@ class BaseApp {
 			cnx.rollback();
 			Web.redirect("/");
 			return;
-			
+
 		} catch ( e : sugoi.ControllerAction) {
-			
+
 			switch( e ) {
 			case RedirectAction(url):
 				Web.redirect(url);
@@ -292,7 +292,6 @@ class BaseApp {
 		var e = new sugoi.db.Error();
 		e.url = Web.getURI();
 		e.ip = Web.getClientIP();
-		e.user = if( user != null ) user else null;
 		e.date = Date.now();
 		e.userAgent = Web.getClientHeader("User-Agent");
 		e.error = message.toString();
@@ -307,21 +306,21 @@ class BaseApp {
 				cnx.rollback();
 				logError(e,stack);
 			}
-			
+
 			//log also in a file, in case we don't have a valid connexion to DB
 			php.Syntax.code("error_log({0})", e+"\n" + stack);
-			
+
 			maintain = true;
 			view = new View();
 
 			//Exception can be a string, Enum, Array or tink.core.Error
 			if(Std.is(e,tink.core.Error)){
-				view.exception = e; 
+				view.exception = e;
 			}else{
 				view.message = Std.string(e);
 			}
-			
-			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {				
+
+			if ( App.config.DEBUG || (user != null && user.isAdmin()) ) {
 				view.stack = stack;
 			}
 
@@ -407,7 +406,7 @@ class BaseApp {
 	}
 
 	static function main() {
-		
+
 		/**
 		 * this macro will parse the code and generate the allTexts.pot file
 		 * which will be used as a template for translation files (*.po and *.mo)
@@ -415,7 +414,7 @@ class BaseApp {
 		#if i18n_parsing
 		if( false ) sugoi.i18n.GetText.parse(["../src", "lang/master","../js","../common"], "../www/lang/allTexts.pot");
 		#end
-		
+
 		App.current = new App();
 		var a : BaseApp = App.current;
 
