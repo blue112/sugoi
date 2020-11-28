@@ -34,6 +34,7 @@ class BaseApp {
 			loadConfig();
 		}
 
+		session = null;
 		cookieName = "sid";
 		cookieDomain = "." + App.config.HOST;
 
@@ -190,18 +191,18 @@ class BaseApp {
 		var cookieSid = Web.getCookies().get(cookieName);
 		if( params.exists("sid") ) sids.push(params.get("sid"));
 		if( cookieSid != null ) sids.push(cookieSid);
-		session = sugoi.db.Session.init(sids);
 
-		//Check for maintenance
-		//maintain = sugoi.db.Variable.getInt("maintain") != 0;
+		var shouldIgnoreSession = false;
+		var ignoreSession = ["/kaliapi", "/shivaApi", "/laxmiApi", "/registerapi"];
+		if (!ignoreSession.contains(Web.getURI()))
+		{
+			session = sugoi.db.Session.init(sids);
+		}
+
 		maintain = false;
 
 		if (session != null)
 			user = session.user;
-
-		//setup langage
-		setupLang();
-
 
 		if( maintain && ((user != null && user.isAdmin()) ) )
 			maintain = false;

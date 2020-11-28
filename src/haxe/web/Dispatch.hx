@@ -256,62 +256,6 @@ class Dispatch {
 
 	static inline var PREFIX = "haxe.web.Dispatch.DispatchRule.";
 
-	static function getType(t,p) {
-		switch( Context.follow(t) ) {
-		case TInst(i,_):
-			switch( i.toString() ) {
-			case "Int":
-				return MRInt;
-			case "Float":
-				return MRFloat;
-			case "String":
-				return MRString;
-			case "Date":
-				return MRDate;
-			case "haxe.web.Dispatch":
-				return MRDispatch;
-			default:
-				var c = i.get();
-				var csup = c.superClass;
-				while( csup != null ) {
-					var name = csup.t.toString();
-					if( name == "neko.db.Object" || name == "sys.db.Object" ) {
-						var lock = switch( t ) {
-						case TType(t, _): t.get().name == "Lock";
-						default: false;
-						}
-						return MRSpod(i.toString(), lock);
-					}
-					else if ( name == "haxe.web.Dispatch" ) {
-						return MRDispatch;
-					}
-					csup = csup.t.get().superClass;
-				}
-				Context.error("Unsupported dispatch type '"+i.toString()+"'",p);
-			}
-		case TEnum(e, _):
-			switch( e.toString() ) {
-			case "Bool":
-				return MRBool;
-			default:
-				return MREnum(e.toString());
-			}
-		case TAbstract(a,_):
-			switch( a.toString() ) {
-			case "Int":
-				return MRInt;
-			case "Float":
-				return MRFloat;
-			case "Bool":
-				return MRBool;
-			default:
-				Context.error("Unsupported dispatch type "+a.toString(),p);
-			}
-		default:
-			Context.error("Unsupported dispatch type "+Std.string(t),p);
-		}
-		return null;
-	}
 
 	static function makeArgs( t : haxe.macro.Type, p ) {
 		var args = [];

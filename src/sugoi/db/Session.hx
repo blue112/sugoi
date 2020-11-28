@@ -21,13 +21,22 @@ class Session extends sys.db.Object {
 	#end
 
 	@:skip public var data : Dynamic;
-	@:relation(uid) public var user : SNull<db.User>;
 
-	public function new() {
-		super();
-		messages = [];
-		data = {};
+	public var uid : SInt;
+
+	@:skip public var user(get, set): db.User;
+	public function get_user() {
+		if (uid == null)
+			return null;
+
+		return db.User.manager.get(uid);
 	}
+
+	public function set_user(user:db.User) {
+		this.uid = if (user == null) null else user.id;
+		return user;
+	}
+
 
 	/**
 	 * Stores a message in session
@@ -108,15 +117,4 @@ class Session extends sys.db.Object {
 		}
 		return id;
 	}
-
-	/**
-	 * Delete old sessions
-	 */
-	public static function clean() {
-		//older than 3 month
-		manager.delete($lastTime < DateTools.delta(Date.now(),-1000.0*60*60*24*30*3));
-		//unlogged user
-		manager.delete($lastTime < DateTools.delta(Date.now(),-1000.0*60*60*24*30) && $uid==null );
-	}
-
 }
