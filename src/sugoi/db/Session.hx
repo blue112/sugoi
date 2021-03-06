@@ -4,25 +4,19 @@ import db.User;
 import sugoi.Web;
 
 @:id(sid)
-//@:index(uid,unique)
-class Session extends sys.db.Object {
-
+class Session extends sys.db.Object
+{
 	public var sid : SString<32>;
 	public var ip : SString<15>;
 	public var lang : SString<2>;
 	public var messages : SData<Array<{ error : Bool, text : String }>>;
 	public var lastTime : SDateTime;
 	public var createTime : SDateTime;
-
-	#if neko
-	public var sdata : SNekoSerialized;
-	#else
 	public var sdata : SText;
-	#end
 
 	@:skip public var data : Dynamic;
 
-	public var uid : SInt;
+	public var uid : Null<SInt>;
 
 	@:skip public var user(get, set): db.User;
 	public function get_user() {
@@ -47,11 +41,8 @@ class Session extends sys.db.Object {
 	}
 
 
-	public function setUser( u : User ):Void {
-
-		//remove any previous session for this user
-		//manager.delete($uid==u.id);
-
+	public function setUser( u : User ):Void
+	{
 		lang = u.lang;
 		user = u;
 		update();
@@ -90,6 +81,7 @@ class Session extends sys.db.Object {
 		s.ip = ip;
 		s.createTime = Date.now();
 		s.lastTime = Date.now();
+		s.uid = null;
 
 		s.sid = generateId();
 		var count = 20;

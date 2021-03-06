@@ -38,7 +38,8 @@ class Config {
 		return xml.get(val) != null;
 	}
 
-	public function getBool( val : String, ?def ) {
+	public function getBool( val : String, ?def=false ):Bool
+	{
 		var v = get(val);
 		if( v == null ) return def;
 		return( v == "1" || v == "true" );

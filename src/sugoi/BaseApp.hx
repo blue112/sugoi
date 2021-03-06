@@ -82,10 +82,10 @@ class BaseApp {
 		return true;
 	}
 
-	function saveAndClose() {
-
+	function saveAndClose()
+	{
 		if( cnx == null ) return;
-		if( session != null && session.sid != null )
+		if( session != null && session.sid != null && session.uid != null )
 			session.update();
 
 		//cnx.commit();
@@ -147,15 +147,16 @@ class BaseApp {
 		if (App.config.LANG == "master") return;
 
 		//lang is taken from user object or from HTTP headers
-		if ( session.lang == null || !Lambda.has(App.config.LANGS, session.lang) ){
+		if (session.lang == null || !Lambda.has(App.config.LANGS, session.lang))
+		{
 			session.lang = (user == null) ? detectLang() : user.lang;
 		}
 
 		//override if param is given
 		var lang = params.get("lang");
-		if ( lang != null && Lambda.has(App.config.LANGS, lang) ){
+		if (lang != null && Lambda.has(App.config.LANGS, lang))
+		{
 			session.lang = lang;
-
 		}
 
 		//init lang
@@ -165,7 +166,8 @@ class BaseApp {
 	/**
 	 * Get current application langage (2 letters lowercase)
 	 */
-	public function getLang(){
+	public function getLang()
+	{
 		return (session != null && session.lang != null && session.lang != "") ? session.lang : App.config.LANG;
 	}
 
@@ -192,7 +194,6 @@ class BaseApp {
 		if( params.exists("sid") ) sids.push(params.get("sid"));
 		if( cookieSid != null ) sids.push(cookieSid);
 
-		var shouldIgnoreSession = false;
 		var ignoreSession = ["/kaliapi", "/shivaApi", "/laxmiApi", "/registerapi"];
 		if (!ignoreSession.contains(Web.getURI()))
 		{
@@ -217,9 +218,7 @@ class BaseApp {
 
 		//dispatching
 		try {
-
 			uri = Web.getURI();
-			if ( StringTools.endsWith(uri, "/index.n") ) uri = uri.substr(0, -8);
 
 			//"before dispatch" callback
 			beforeDispatch();
@@ -233,11 +232,7 @@ class BaseApp {
 			App.log(e);
 			//dispatch / routing error
 			if ( App.config.DEBUG )	{
-				#if neko
-				neko.Lib.rethrow(e);
-				#else
 				php.Lib.rethrow(e);
-				#end
 			}
 			cnx.rollback();
 			Web.redirect("/");
