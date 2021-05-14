@@ -310,7 +310,7 @@ class BaseApp {
 			view = new View();
 
 			//Exception can be a string, Enum, Array or tink.core.Error
-			if(Std.is(e,tink.core.Error)){
+			if(Std.isOfType(e,tink.core.Error)){
 				view.exception = e;
 			}else{
 				view.message = Std.string(e);

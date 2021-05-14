@@ -100,10 +100,6 @@ class Form
 			if (!fieldsets.exists(fieldSetKey)) throw "No fieldset '" + fieldSetKey + "' exists in '" + name + "' form.";
 			fieldsets.get(fieldSetKey).elements.push(element);
 		}
-
-		//if ( Std.is(element, RichtextWym) )
-			//wymEditorCount++;
-
 		return element;
 	}
 
@@ -116,9 +112,6 @@ class Form
 			{
 				fs.elements.remove(element);
 			}
-
-			//if ( Std.is(element, RichtextWym) )
-				//wymEditorCount--;
 			return true;
 		}
 		return false;
