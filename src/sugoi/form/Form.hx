@@ -49,7 +49,8 @@ class Form
 		requiredErrorClass = "formRequiredError";
 		invalidErrorClass = "formInvalidError";
 		labelRequiredIndicator = " *";
-		defaultClass = Form.USE_TWITTER_BOOTSTRAP ? "form-horizontal":"";
+		//defaultClass = Form.USE_TWITTER_BOOTSTRAP ? "form-horizontal":"";
+		defaultClass = "";
 
 		forcePopulate = true;
 		multipart = false;

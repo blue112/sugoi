@@ -5,33 +5,47 @@ import sugoi.form.FormElement;
 
 class Checkbox extends FormElement<Bool>
 {
-	
+
 	public function new(name:String, label:String, ?checked:Bool=false, ?required:Bool=false, ?attibutes:String="")
 	{
 		super();
-		
+
 		this.name = name;
 		this.label = label;
 		this.value = checked;
 		this.required = required;
 		this.attributes = attibutes;
 	}
-	
+
+	override public function getLabelClasses() : String
+	{
+		return "form-check-label";
+	}
+
+	override public function getFullRow():String {
+		var s = new StringBuf();
+		if(Form.USE_TWITTER_BOOTSTRAP) s.add('<div class="form-check mb-3">\n');
+		s.add(this.render());
+		s.add(getLabel());
+		if (Form.USE_TWITTER_BOOTSTRAP) s.add('</div>\n');
+		return s.toString();
+	}
+
 	override public function render():String
 	{
 		var n = parentForm.name + "_" +name;
-		
+
 		var checkedStr = value ? "checked" : "";
-		
-		return "<input type=\"checkbox\" id=\"" + n + "\" name=\"" + n + "\" class=\"" + getClasses() + "\" value=\"true\" " + checkedStr + " />";
+
+		return "<input type=\"checkbox\" id=\"" + n + "\" name=\"" + n + "\" class=\"form-check-input " + getClasses() + "\" value=\"true\" " + checkedStr + " />";
 	}
-	
-	
+
+
 	override public function getTypedValue(str:String):Bool
 	{
 		return str == "1" || str == "true";
 	}
-	
+
 	override public function isValid():Bool
 	{
 		errors.clear();

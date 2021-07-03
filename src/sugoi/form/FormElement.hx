@@ -99,7 +99,7 @@ class FormElement<T>
 		var n = parentForm.name + "_" + name;
 		var v = App.current.params.get(n);
 		value = getTypedValue(v);
-		
+
 		//Debug
 		//trace("value of " + name +"("+n+")  is " + v + ", typed :"+ value+"<br/>");
 	}
@@ -145,9 +145,9 @@ class FormElement<T>
 	 */
 	public function getFullRow():String {
 		var s = new StringBuf();
-		if(Form.USE_TWITTER_BOOTSTRAP) s.add('<div class="form-group">\n');
+		if(Form.USE_TWITTER_BOOTSTRAP) s.add('<div class="form-floating mb-3">\n');
+		s.add(this.render());
 		s.add(getLabel());
-		s.add("<div class='col-sm-8'>" + this.render() + "</div>");
 		if (Form.USE_TWITTER_BOOTSTRAP) s.add('</div>\n');
 		return s.toString();
 	}
@@ -163,7 +163,7 @@ class FormElement<T>
 	public function getLabelClasses() : String
 	{
 		var css = "";
-		if (Form.USE_TWITTER_BOOTSTRAP) css = "col-sm-4 control-label";
+		//if (Form.USE_TWITTER_BOOTSTRAP) css = "col-sm-4 control-label";
 
 		var requiredSet = false;
 		if (required) {

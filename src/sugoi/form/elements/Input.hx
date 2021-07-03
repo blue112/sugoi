@@ -71,7 +71,7 @@ class Input<T> extends FormElement<T>
 			case ITColor : "color";
 		}
 
-		return "<input class=\""+ getClasses() +"\" type=\""+tType+"\" name=\""+n+"\" id=\""+n+"\" value=\"" +safeString(value)+ "\"  "+attributes+" "+ (disabled?"disabled":"")+"/>" + ((required && parentForm.isSubmitted() && printRequired)?" required":"") ;
+		return "<input class=\""+ getClasses() +"\" type=\""+tType+"\" placeholder=\""+label+"\" name=\""+n+"\" id=\""+n+"\" value=\"" +safeString(value)+ "\"  "+attributes+" "+ (disabled?"disabled":"")+"/>" + ((required && parentForm.isSubmitted() && printRequired)?" required":"") ;
 	}
 
 	override public function getTypedValue(str:String):T{

@@ -10,7 +10,6 @@ class Session extends sys.db.Object
 	public var ip : SString<15>;
 	public var lang : SString<2>;
 	public var messages : SData<Array<{ error : Bool, text : String }>>;
-	public var lastTime : SDateTime;
 	public var createTime : SDateTime;
 	public var sdata : SText;
 
@@ -52,7 +51,6 @@ class Session extends sys.db.Object
 
 	public override function update() {
 		sdata = haxe.Serializer.run(data);
-		lastTime = Date.now();
 		super.update();
 	}
 
@@ -80,7 +78,6 @@ class Session extends sys.db.Object
 		var s = new Session();
 		s.ip = ip;
 		s.createTime = Date.now();
-		s.lastTime = Date.now();
 		s.uid = null;
 
 		s.sid = generateId();
