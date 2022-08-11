@@ -327,23 +327,6 @@ class BaseApp
     {
     }
 
-    public function logError(e:Dynamic, ?stack:String)
-    {
-        var stack = if (stack != null) stack else haxe.CallStack.toString(haxe.CallStack.exceptionStack());
-        var message = new StringBuf();
-        message.add(Std.string(e));
-        message.add("\n");
-        message.add(stack);
-        message.add("\n");
-        var e = new sugoi.db.Error();
-        e.url = Web.getURI();
-        e.ip = Web.getClientIP();
-        e.date = Date.now();
-        e.userAgent = Web.getClientHeader("User-Agent");
-        e.error = message.toString();
-        e.insert();
-    }
-
     function errorHandler(e:Dynamic)
     {
         try
@@ -353,7 +336,6 @@ class BaseApp
             if (cnx != null)
             {
                 cnx.rollback();
-                logError(e, stack);
             }
 
             // log also in a file, in case we don't have a valid connexion to DB
