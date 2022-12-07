@@ -1,4 +1,5 @@
 package sugoi.form.elements;
+
 import sugoi.form.FormElement;
 import sugoi.form.elements.Input;
 
@@ -7,32 +8,35 @@ import sugoi.form.elements.Input;
  */
 class CSRFProtection extends StringInput
 {
-	public function new()
-	{
+    public function new()
+    {
+        value = haxe.crypto.Md5.encode(App.current.session.sid + App.config.KEY.substr(0, 5));
+        super("token", "", value, true);
+        inputType = ITHidden;
+    }
 
-		value = haxe.crypto.Md5.encode(App.current.session.sid + App.config.KEY.substr(0, 5));
-		super("token","", value, true);
-		inputType = ITHidden;
-	}
+    override public function isValid()
+    {
+        if (value == null) throw "empty token";
+        var valid = Web.getParams().get(parentForm.name + "_" + name) == value;
 
-	override public function isValid() {
-		if (value == null) throw "empty token";
-		var valid = Web.getParams().get(parentForm.name + "_" + name) == value;
+        if (!valid)
+        {
+            errors.add("Bad token");
+        }
+        return valid;
+    }
 
-		if (!valid) {
-			errors.add("Bad token");
-		}
-		return valid;
-	}
+    override public function getFullRow()
+    {
+        return render();
+    }
 
-
-	override public function getFullRow() {
-		return render();
-	}
-
-	override public function render() {
-
-		return "<input type=\"hidden\" value=\"" + value + "\" " + attributes + " name=\"" +parentForm.name + "_" +name + "\" id=\"" +parentForm.name + "_" +name + "\" />";
-
-	}
+    override public function render()
+    {
+        var replaceRegex = ~/[^0-9a-f]/g;
+        value = replaceRegex.replace(value, "");
+        return "<input type=\"hidden\" value=\"" + value + "\" " + attributes + " name=\"" + parentForm.name + "_" + name + "\" id=\"" + parentForm.name
+            + "_" + name + "\" />";
+    }
 }
