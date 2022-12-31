@@ -12,19 +12,85 @@ import php.SuperGlobal.*;
 
 class Web
 {
-	public static function redirect(to:String)
+    public static function redirect(to:String)
     {
         setHeader("Location", to);
     }
 
-	public static function getCookies():Map<String, String>
+    public static function getCookies():Map<String, String>
     {
-		return Lib.hashOfAssociativeArray(_COOKIE);
-	}
+        return Lib.hashOfAssociativeArray(_COOKIE);
+    }
 
     static public function getParams()
     {
         return Lib.hashOfAssociativeArray(array_merge(_GET, _POST));
+    }
+
+    public static function getParamsString():String
+    {
+        if (isset(_SERVER['QUERY_STRING']))
+            return _SERVER['QUERY_STRING'];
+        else
+            return "";
+    }
+
+    public static function getPostData():Null<String>
+    {
+        var h = fopen("php://input", "r");
+        var bsize = 8192;
+        var max = 32;
+        var data:String = null;
+        var counter = 0;
+        while (!feof(h) && counter < max)
+        {
+            data = Syntax.concat(data, fread(h, bsize));
+            counter++;
+        }
+        fclose(h);
+        return data;
+    }
+
+    static public function getParamValues(param:String)
+    {
+        var reg = new EReg("^" + param + "(\\[|%5B)([0-9]*?)(\\]|%5D)=(.*?)$", "");
+        var res = new Array<String>();
+        var explore = function(data:String)
+        {
+            if (data == null || strlen(data) == 0)
+                return;
+            for (part in data.split("&"))
+            {
+                if (reg.match(part))
+                {
+                    var idx = reg.matched(2);
+                    var val = StringTools.urlDecode(reg.matched(4));
+                    if (idx == "")
+                        res.push(val);
+                    else
+                        res[Std.parseInt(idx)] = val;
+                }
+            }
+        }
+        explore(StringTools.replace(getParamsString(), ";", "&"));
+        explore(getPostData());
+
+        if (res.length == 0)
+        {
+            var post:haxe.ds.StringMap<Dynamic> = Lib.hashOfAssociativeArray(_POST);
+            var data = post.get(param);
+            if (is_array(data))
+            {
+                foreach(data, function(key:Int, value:String)
+                {
+                    res[key] = value;
+                });
+            }
+        }
+
+        if (res.length == 0)
+            return null;
+        return res;
     }
 
     static public function getClientIP()
@@ -34,28 +100,29 @@ class Web
 
     static public function getURI()
     {
-		var s:String = _SERVER['REQUEST_URI'];
-		return s.split("?")[0];
+        var s:String = _SERVER['REQUEST_URI'];
+        return s.split("?")[0];
     }
 
     static public function setHeader(k:String, v:String)
     {
-        header(k+": "+v);
+        header(k + ": " + v);
     }
 
     static public function getCwd():String
     {
-        return getcwd()+"/";
+        return getcwd() + "/";
     }
 
     static public function getClientHeaders()
     {
-		var headers = loadClientHeaders();
-		var result = new List();
-		for (key in headers.keys()) {
-			result.push({value: headers.get(key), header: key});
-		}
-		return result;
+        var headers = loadClientHeaders();
+        var result = new List();
+        for (key in headers.keys())
+        {
+            result.push({value: headers.get(key), header: key});
+        }
+        return result;
     }
 
     static public function getClientHeader(k:String)
@@ -64,41 +131,57 @@ class Web
     }
 
     private static var _clientHeaders:Map<String, String>;
-    static function loadClientHeaders():Map<String, String> {
+
+    static function loadClientHeaders():Map<String, String>
+    {
         if (_clientHeaders != null)
             return _clientHeaders;
 
         _clientHeaders = new Map();
 
-        if (function_exists('getallheaders')) {
-            foreach(getallheaders(), function(key:String, value:Dynamic) {
+        if (function_exists('getallheaders'))
+        {
+            foreach(getallheaders(), function(key:String, value:Dynamic)
+            {
                 _clientHeaders.set(str_replace('-', '_', strtoupper(key)), Std.string(value));
             });
             return _clientHeaders;
         }
 
-        var copyServer = Syntax.assocDecl({
-            CONTENT_TYPE: 'Content-Type',
-            CONTENT_LENGTH: 'Content-Length',
-            CONTENT_MD5: 'Content-Md5'
-        });
-        foreach(_SERVER, function(key:String, value:Dynamic) {
-            if ((substr(key, 0, 5) : String) == 'HTTP_') {
+        var copyServer = Syntax.assocDecl(
+            {
+                CONTENT_TYPE: 'Content-Type',
+                CONTENT_LENGTH: 'Content-Length',
+                CONTENT_MD5: 'Content-Md5'
+            });
+        foreach(_SERVER, function(key:String, value:Dynamic)
+        {
+            if ((substr(key, 0, 5) : String) == 'HTTP_')
+            {
                 key = substr(key, 5);
-                if (!isset(copyServer[key]) || !isset(_SERVER[key])) {
+                if (!isset(copyServer[key]) || !isset(_SERVER[key]))
+                {
                     _clientHeaders[key] = Std.string(value);
                 }
-            } else if (isset(copyServer[key])) {
+            }
+            else if (isset(copyServer[key]))
+            {
                 _clientHeaders[key] = Std.string(value);
             }
         });
-        if (!_clientHeaders.exists('AUTHORIZATION')) {
-            if (isset(_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        if (!_clientHeaders.exists('AUTHORIZATION'))
+        {
+            if (isset(_SERVER['REDIRECT_HTTP_AUTHORIZATION']))
+            {
                 _clientHeaders['AUTHORIZATION'] = Std.string(_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
-            } else if (isset(_SERVER['PHP_AUTH_USER'])) {
+            }
+            else if (isset(_SERVER['PHP_AUTH_USER']))
+            {
                 var basic_pass = isset(_SERVER['PHP_AUTH_PW']) ? Std.string(_SERVER['PHP_AUTH_PW']) : '';
                 _clientHeaders['AUTHORIZATION'] = 'Basic ' + base64_encode(_SERVER['PHP_AUTH_USER'] + ':' + basic_pass);
-            } else if (isset(_SERVER['PHP_AUTH_DIGEST'])) {
+            }
+            else if (isset(_SERVER['PHP_AUTH_DIGEST']))
+            {
                 _clientHeaders['AUTHORIZATION'] = Std.string(_SERVER['PHP_AUTH_DIGEST']);
             }
         }
@@ -107,6 +190,6 @@ class Web
     }
 }
 #else
-    //Web.getCwd() will work in macros
-    typedef Web = Sys;
+// Web.getCwd() will work in macros
+typedef Web = Sys;
 #end
