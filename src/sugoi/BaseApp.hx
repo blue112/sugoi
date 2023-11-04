@@ -252,7 +252,7 @@ class BaseApp
         try
         {
             uri = Web.getURI();
-            if (uri.endsWith(".png") || uri.endsWith(".js") || uri.endsWith(".css"))
+            if (uri.endsWith(".png") || uri.endsWith(".js") || uri.endsWith(".css") || uri.endsWith(".ico"))
             {
                 return;
             }
