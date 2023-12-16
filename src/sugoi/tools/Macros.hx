@@ -55,7 +55,7 @@ class Macros
                         {
                             Context.error("Invalid @tpl", m.pos);
                         }
-                    case "admin", "logged", "rt", "modo", "animation", "supermodo", "superanim":
+                    case "admin", "logged", "rt", "modo", "animation", "supermodo", "superanim", "canUseAnimationTool":
 
                     default:
                         if (m.name.charCodeAt(0) != "_".code)

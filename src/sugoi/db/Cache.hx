@@ -1,65 +1,81 @@
 package sugoi.db;
+
 import sys.db.Types;
 
 /**
- * Key-Value temporary storage in a Memcached style
+    CREATE TABLE `Cache` (
+     `name` varchar(128) NOT NULL,
+     `value` mediumtext NOT NULL,
+     `expire` datetime NOT NULL,
+     PRIMARY KEY (`name`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
+    * Key-Value temporary storage in a Memcached style
  */
 @:id(name)
 class Cache extends sys.db.Object
 {
-	public var name : SString<128>;
-	public var value : SText;
-	public var expire : SDateTime;
-	//public var cdate : SNull<SDateTime>;
+    public var name:SString<128>;
+    public var value:SText;
+    public var expire:SDateTime;
 
-	public function new(){
-		super();
-		//cdate = Date.now();
-	}
+    // public var cdate : SNull<SDateTime>;
 
-	/**
-	 * Read the value for key $id
-	 */
-	public static function get(id:String):Dynamic {
-		if (Std.random(1000) == 0) Cache.manager.delete($expire < Date.now());
+    public function new()
+    {
+        super();
+        // cdate = Date.now();
+    }
 
-		var c = manager.get(id, true);
-		if (c == null) return null;
-		if (c.expire.getTime() < Date.now().getTime()) {
-			c.delete();
-			return null;
-		}
-		return haxe.Unserializer.run(c.value);
-	}
+    /**
+     * Read the value for key $id
+     */
+    public static function get(id:String):Dynamic
+    {
+        if (Std.random(1000) == 0) Cache.manager.delete($expire < Date.now());
 
-	/**
-	 * Set a value for key $id
-	 * and optionnaly a lifetime in seconds
-	 */
-	public static function set(id:String, value:Dynamic,expireInSeconds:Float) {
-		var c = manager.get(id, true);
-		var niou = false;
-		if (c == null) {
-			niou = true;
-			c = new Cache();
-			c.name = id;
-		}
-		c.value = haxe.Serializer.run(value);
-		c.expire = DateTools.delta(Date.now(), expireInSeconds*1000.0);
-		if (niou) {
-			c.insert();
-		}else {
-			c.update();
-		}
-	}
+        var c = manager.get(id, true);
+        if (c == null) return null;
+        if (c.expire.getTime() < Date.now().getTime())
+        {
+            c.delete();
+            return null;
+        }
+        return haxe.Unserializer.run(c.value);
+    }
 
-	/**
-	 * Delete a value for key $id
-	 */
-	public static function destroy(id:String) {
-		var c = manager.get(id, true);
-		if (c != null) c.delete();
-	}
+    /**
+     * Set a value for key $id
+     * and optionnaly a lifetime in seconds
+     */
+    public static function set(id:String, value:Dynamic, expireInSeconds:Float)
+    {
+        var c = manager.get(id, true);
+        var niou = false;
+        if (c == null)
+        {
+            niou = true;
+            c = new Cache();
+            c.name = id;
+        }
+        c.value = haxe.Serializer.run(value);
+        c.expire = DateTools.delta(Date.now(), expireInSeconds * 1000.0);
+        if (niou)
+        {
+            c.insert();
+        }
+        else
+        {
+            c.update();
+        }
+    }
 
-
+    /**
+     * Delete a value for key $id
+     */
+    public static function destroy(id:String)
+    {
+        var c = manager.get(id, true);
+        if (c != null) c.delete();
+    }
 }
