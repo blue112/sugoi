@@ -3,6 +3,7 @@ package sugoi;
 import sugoi.Web;
 
 using StringTools;
+using Lambda;
 
 class BaseApp
 {
@@ -221,6 +222,10 @@ class BaseApp
     {
         params = Web.getParams();
 
+        var ignoreSessionPath = [
+            "/w/",
+            "/publicGanga"
+        ];
         var ignoreSession = [
             "/kaliapi",
             "/shivaApi",
@@ -228,7 +233,8 @@ class BaseApp
             "/registerapi",
             "/gangaApi",
         ];
-        if (!ignoreSession.contains(Web.getURI()) && !Web.getURI().contains("/publicGanga"))
+        var uri = Web.getURI();
+        if (!ignoreSession.contains(uri) && !ignoreSessionPath.exists(path -> uri.startsWith(path)))
         {
             initSession();
         }
