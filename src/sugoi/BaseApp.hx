@@ -271,12 +271,15 @@ class BaseApp
             d.dispatch(new controller.Main());
         } catch (e:haxe.web.Dispatch.DispatchError)
         {
-            App.log(uri);
-            App.log(e);
-            // dispatch / routing error
-            if (App.config.DEBUG)
+            if (!e.match(DETooManyValues)) // "404"
             {
-                php.Lib.rethrow(e);
+                App.log(uri);
+                App.log(e);
+                // dispatch / routing error
+                if (App.config.DEBUG)
+                {
+                    php.Lib.rethrow(e);
+                }
             }
             cnx.rollback();
             Web.redirect("/");

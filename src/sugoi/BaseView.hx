@@ -2,6 +2,7 @@ package sugoi;
 
 import sugoi.db.File;
 
+@:php.attribute("\\AllowDynamicProperties")
 class BaseView
 {
     var _vcache:Map<String, String>;
