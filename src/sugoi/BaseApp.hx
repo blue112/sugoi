@@ -224,7 +224,10 @@ class BaseApp
 
         var ignoreSessionPath = [
             "/w/",
-            "/publicGanga"
+            "/publicGanga",
+            "/home/",
+            "/hmc/",
+            "/tchat/",
         ];
         var ignoreSession = [
             "/kaliapi",
