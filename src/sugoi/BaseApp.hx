@@ -1,6 +1,9 @@
 package sugoi;
 
+import controller.pub.PublicController;
+import php.Global;
 import sugoi.Web;
+import haxe.web.Dispatch;
 
 using StringTools;
 using Lambda;
@@ -222,22 +225,13 @@ class BaseApp
     {
         params = Web.getParams();
 
-        var ignoreSessionPath = [
-            "/w/",
-            "/publicGanga",
-            "/home/",
-            "/hmc/",
-            "/tchat/",
-        ];
         var ignoreSession = [
-            "/kaliapi",
             "/shivaApi",
             "/laxmiApi",
-            "/registerapi",
             "/gangaApi",
         ];
         var uri = Web.getURI();
-        if (!ignoreSession.contains(uri) && !ignoreSessionPath.exists(path -> uri.startsWith(path)))
+        if (!isPublicHost() && !ignoreSession.contains(uri))
         {
             initSession();
         }
@@ -271,18 +265,18 @@ class BaseApp
 
             var d = new haxe.web.Dispatch(uri, params);
             d.onMeta = onMeta;
-            d.dispatch(new controller.Main());
+            dispatch(d);
         } catch (e:haxe.web.Dispatch.DispatchError)
         {
-            if (!e.match(DETooManyValues)) // "404"
+            if (e.match(DETooManyValues)) // "404"
             {
-                App.log(uri);
-                App.log(e);
-                // dispatch / routing error
-                if (App.config.DEBUG)
-                {
-                    php.Lib.rethrow(e);
-                }
+                Global.http_response_code(404);
+                PublicController.setDefaultVars(null, view);
+                view.title = "Page non trouvée";
+                view.styles.push("wiki.css?v=" + Date.now().getTime());
+                setTemplate("public/404.mtt");
+                executeTemplate(false);
+                return;
             }
             cnx.rollback();
             Web.redirect("/");
@@ -329,6 +323,16 @@ class BaseApp
         {
             executeTemplate(true); // will saveAndClose
         }
+    }
+
+    public function dispatch(d:Dispatch)
+    {
+        d.dispatch(new controller.Main());
+    }
+
+    public function isPublicHost()
+    {
+        return false;
     }
 
     /**
